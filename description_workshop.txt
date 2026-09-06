@@ -1,0 +1,38 @@
+﻿The Avaritia Terraria Mod is an end-game-focused add‑on for Terraria, 
+inspired by the famous Minecraft mod Avaritia. 
+It currently adds numerous high-powered items, 
+special crafting stations and unique mechanics adapted from the original mod, 
+such as singularity compression systems and infinity-tier gear.
+The mod code is currently open source on Github under the MIT license.
+Code support:洛谔谔，yiyang233，Star_KZ，DeepSeek，Kimi
+ 
+[h2] -= Credits =- [/h2]
+Creator: Unrealistically
+Programming: Unrealistically
+Design: Unrealistically, WP
+Art: WP, Pulastara, Unrealistically
+Translations: Unrealistically
+Testing: Unrealistically
+
+[h2] -=Related Information=- [/h2]
+Homepage = [url=store.steampowered.com] https://space.bilibili.com/1108947907 [/url]
+Github: 
+
+Avaritia Terraria Mod 是泰拉瑞亚一款面向终局内容的附属模组，
+灵感源自知名我的世界模组无尽贪婪(Avaritia)。
+模组目前加入大量强力物品、专属合成工作站以及移植改编自原作的独特机制，
+包含奇点压缩体系与无尽层级装备。
+目前模组代码已按照MIT协议在Github上开源。
+ 
+[h2] -=制作人员=- [/h2]
+主创：Unrealistically
+程序：Unrealistically
+设计：Unrealistically，WP
+美术：WP，Pulastara，Unrealistically
+翻译：Unrealistically
+测试：Unrealistically
+技术支持：洛谔谔，yiyang233，Star_KZ，DeepSeek，Kimi
+
+[h2] -=相关信息=- [/h2]
+模组主页：[url=store.steampowered.com] https://space.bilibili.com/1108947907 [/url]
+Github：

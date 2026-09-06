@@ -1,0 +1,61 @@
+﻿[*.cs]
+
+# IDE0011: 添加大括号
+dotnet_diagnostic.IDE0011.severity = warning
+
+# IDE0045: 转换为条件表达式
+dotnet_diagnostic.IDE0045.severity = warning
+
+# IDE0004: 删除不必要的转换
+dotnet_diagnostic.IDE0004.severity = warning
+
+# IDE0008: 使用显式类型
+dotnet_diagnostic.IDE0008.severity = suggestion
+
+# Default severity for all analyzer diagnostics
+dotnet_analyzer_diagnostic.severity = silent
+
+# IDE0001: 简化名称
+dotnet_diagnostic.IDE0001.severity = warning
+
+# IDE0306: 简化集合初始化
+dotnet_diagnostic.IDE0306.severity = warning
+
+# IDE0002: 简化成员访问
+dotnet_diagnostic.IDE0002.severity = warning
+
+# IDE0059: 不需要赋值
+dotnet_diagnostic.IDE0059.severity = suggestion
+
+# IDE0034: 简化 "default" 表达式
+dotnet_diagnostic.IDE0034.severity = suggestion
+
+# IDE0046: 转换为条件表达式
+dotnet_diagnostic.IDE0046.severity = warning
+
+# IDE0017: 简化对象初始化
+dotnet_diagnostic.IDE0017.severity = suggestion
+
+# IDE0090: 使用 "new(...)"
+dotnet_diagnostic.IDE0090.severity = suggestion
+
+# IDE0044: 添加只读修饰符
+dotnet_diagnostic.IDE0044.severity = suggestion
+
+# IDE0300: 简化集合初始化
+dotnet_diagnostic.IDE0300.severity = suggestion
+
+# IDE0047: 删除不必要的括号
+dotnet_diagnostic.IDE0047.severity = warning
+
+# IDE0130: 命名空间与文件夹结构不匹配
+dotnet_diagnostic.IDE0130.severity = error
+
+# ChangeMagicNumberToID: 将魔法数字替换为合适的 ID
+dotnet_diagnostic.ChangeMagicNumberToID.severity = warning
+
+# IDE0270: 使用 COALESCE 表达式
+dotnet_diagnostic.IDE0270.severity = suggestion
+
+# IDE0028: 简化集合初始化
+dotnet_diagnostic.IDE0028.severity = warning

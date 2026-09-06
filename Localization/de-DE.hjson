@@ -1,0 +1,333 @@
+﻿Mods: {
+	AvaritiaMod: {
+		Tiles: {
+			CompressedCraftingTableTile.MapEntry: Komprimierte Werkbank
+			ExtremeCraftingTableTile.MapEntry: Extreme Werkbank
+			DoubleCompressedCraftingTableTile.MapEntry: Doppelt komprimierte Werkbank
+			NeutronCollectorTile.MapEntry: Neutronensammler
+			NeutroniumCompressorTile.MapEntry: Neutroniumkompresser
+		}
+
+		Items: {
+			CosmicMeatballs: {
+				DisplayName: Kosmische Fleischbällchen
+				Tooltip: ""
+			}
+
+			EndestPearl: {
+				DisplayName: Enderste Perle
+				Tooltip: ""
+			}
+
+			MatterCluster: {
+				DisplayName: Materiehaufen
+				Tooltip:
+					'''
+
+					[c/404040:Zum Zerstören benutzen.]
+					[c/404040:Halte SHIFT für genaueres.]
+					'''
+			}
+
+			UltimateStew: {
+				DisplayName: Ultimative Suppe
+				Tooltip: ""
+			}
+
+			InfinityIngot: {
+				DisplayName: Unendlichkeitsbarren
+				Tooltip: "[c/404040:Die Gewalt des Universums in deiner Hand.]"
+			}
+
+			NeutroniumIngot: {
+				DisplayName: Neutroniumbarren
+				Tooltip: "[c/404040:Das dichte Herz eines Sterns in praktischer Barrenform.]"
+			}
+
+			NeutroniumNugget: {
+				DisplayName: Neutroniumnugget
+				Tooltip: "[c/404040:Ungefähr 35,6 Millionen Tonnen.]"
+			}
+
+			PileOfNeutrons: {
+				DisplayName: Neutroniumhaufen
+				Tooltip: "[c/404040:Versuch nicht drüber nachzudenken.]"
+			}
+
+			CompressedCraftingTable: {
+				DisplayName: Komprimierte Werkbank
+				Tooltip: ""
+			}
+
+			ExtremeCraftingTable: {
+				DisplayName: Extreme Werkbank
+				Tooltip: ""
+			}
+
+			InfinityBlock: {
+				DisplayName: Unendlichkeitsblock
+				Tooltip: ""
+			}
+
+			NeutroniumBlock: {
+				DisplayName: Neutroniumblock
+				Tooltip: ""
+			}
+
+			AdamantiteSingularity: {
+				DisplayName: Adamantitsingularität
+				// Tooltip: ""
+			}
+
+			AmberSingularity: {
+				DisplayName: Bernsteinsingularität
+				// Tooltip: ""
+			}
+
+			AmethystSingularity: {
+				DisplayName: Amethystsingularität
+				// Tooltip: ""
+			}
+
+			CobaltSingularity: {
+				DisplayName: Kobaltsingularität
+				// Tooltip: ""
+			}
+
+			CopperSingularity: {
+				DisplayName: Kupfersingularität
+				// Tooltip: ""
+			}
+
+			DemoniteSingularity: {
+				DisplayName: Dämonitsingularität
+				// Tooltip: ""
+			}
+
+			DiamondSingularity: {
+				DisplayName: Diamantsingularität
+				// Tooltip: ""
+			}
+
+			EmeraldSingularity: {
+				DisplayName: Smaragdsingularität
+				// Tooltip: ""
+			}
+
+			GoldSingularity: {
+				DisplayName: Goldsingularität
+				// Tooltip: ""
+			}
+
+			HallowedSingularity: {
+				DisplayName: Hallowedsingularität
+				// Tooltip: ""
+			}
+
+			HellstoneSingularity: {
+				DisplayName: Höllensteinsingularität
+				// Tooltip: ""
+			}
+
+			IronSingularity: {
+				DisplayName: Eisensingularität
+				// Tooltip: ""
+			}
+
+			LeadSingularity: {
+				DisplayName: Bleisingularität
+				// Tooltip: ""
+			}
+
+			LunarSingularity: {
+				DisplayName: Lunarsingularität
+				// Tooltip: ""
+			}
+
+			MeteoriteSingularity: {
+				DisplayName: Meteoritsingularität
+				// Tooltip: ""
+			}
+
+			MythrilSingularity: {
+				DisplayName: Mithrilsingularität
+				// Tooltip: ""
+			}
+
+			OrichalcumSingularity: {
+				DisplayName: Orichalkumsingularität
+				// Tooltip: ""
+			}
+
+			PalladiumSingularity: {
+				DisplayName: Palladiumsingularität
+				// Tooltip: ""
+			}
+
+			PlatinumSingularity: {
+				DisplayName: Platinumsingularität
+				// Tooltip: ""
+			}
+
+			RubySingularity: {
+				DisplayName: Rubinsingularität
+				// Tooltip: ""
+			}
+
+			SapphireSingularity: {
+				DisplayName: Saphirsingularität
+				// Tooltip: ""
+			}
+
+			ShroomiteSingularity: {
+				DisplayName: Shroomitsingularität
+				// Tooltip: ""
+			}
+
+			SilverSingularity: {
+				DisplayName: Silbersingularität
+				// Tooltip: ""
+			}
+
+			SpectreSingularity: {
+				DisplayName: Spectresingularität
+				// Tooltip: ""
+			}
+
+			TinSingularity: {
+				DisplayName: Zinnsingularität
+				// Tooltip: ""
+			}
+
+			TitaniumSingularity: {
+				DisplayName: Titansingularität
+				// Tooltip: ""
+			}
+
+			TopazSingularity: {
+				DisplayName: Topassingularität
+				// Tooltip: ""
+			}
+
+			TungstenSingularity: {
+				DisplayName: Wolframsingularität
+				// Tooltip: ""
+			}
+
+			NatureRuin: {
+				DisplayName: Ruin der Natur
+				Tooltip: ""
+			}
+
+			PlanetEater: {
+				DisplayName: Planetenfresser
+				Tooltip: ""
+			}
+
+			WorldBreaker: {
+				DisplayName: Weltenzerstörer
+				Tooltip: Fortune X
+			}
+
+			LongbowOfTheHeavens: {
+				DisplayName: Langbogen des Himmels
+				// Tooltip: ""
+			}
+
+			SwordOfTheCosmos: {
+				DisplayName: Schwert des Kosmos
+				Tooltip: Unendlichkeit
+			}
+
+			CrystalMatrixIngot: {
+				DisplayName: Kristallmatrix-Barren
+				Tooltip: "[c/404040:Dies ist nichtmal seine Finale Form.]"
+			}
+
+			CrystalMatrix: {
+				DisplayName: Kristallmatrix
+				Tooltip: ""
+			}
+
+			InfinityCatalyst: {
+				DisplayName: Unendlichkeitskatalyst
+				Tooltip: "[c/404040:Einer ist alles und alles ist Einer.]"
+			}
+
+			RecordFragment: {
+				DisplayName: Schallplattenfragment
+				Tooltip: "[c/404040:Manche glauben an die Freiheit der Musik~]"
+			}
+
+			DiamondLattice: {
+				DisplayName: Diamantgitter
+				Tooltip: ""
+			}
+
+			DoubleCompressedCraftingTable: {
+				DisplayName: Doppelt komprimierte Werkbank
+				Tooltip: ""
+			}
+
+			NeutronCollector: {
+				DisplayName: Neutronensammler
+				Tooltip: ""
+			}
+
+			NeutroniumCompressor: {
+				DisplayName: Neutroniumkompresser
+				Tooltip: ""
+			}
+
+			ChlorophyteSingularity: {
+				DisplayName: Chlorophytsingularität
+				// Tooltip: ""
+			}
+
+			CrimtaneSingularity: {
+				DisplayName: Crimtanesingularität
+				// Tooltip: ""
+			}
+
+			InfinityHelmet: {
+				DisplayName: Unendlichkeitshelm
+				Tooltip: ""
+			}
+
+			InfinityChestPlate: {
+				DisplayName: Unendlichkeitsbrustplatte
+				Tooltip: ""
+			}
+
+			InfinityBoots: {
+				DisplayName: Unendlichkeitsschuhe
+				// Tooltip: SANIC
+			}
+
+			NetherStar: {
+				DisplayName: Netherstern
+				Tooltip: ""
+			}
+		}
+
+		Projectiles: {
+			SwordOfTheCosmosProj.DisplayName: Schwert des Kosmos
+			EndestPearlProjectile.DisplayName: Enderste Perle
+			HeavenArrow.DisplayName: Himmelspfeil
+			LongbowOfTheHeavensProj.DisplayName: Langbogen des Himmels
+			AvaritiaMarkProj.DisplayName: Avaritia-Markierung
+		}
+
+		Buffs: {
+			CelestiallyCharged1: {
+				DisplayName: Himmlisch aufgeladen
+				Description: Himmlischer Aufschwung in allen Statistiken
+			}
+
+			CelestiallyCharged2: {
+				DisplayName: Himmlisch aufgeladen
+				Description: Himmlischer Aufschwung in allen Statistiken
+			}
+		}
+	}
+}

@@ -1,0 +1,321 @@
+﻿Mods: {
+	AvaritiaMod: {
+		Tiles: {
+			CompressedCraftingTableTile.MapEntry: Bancada de Trabalho Comprimida
+			ExtremeCraftingTableTile.MapEntry: Bancada de Trabalho Extrema
+			DoubleCompressedCraftingTableTile.MapEntry: Bancada de Trabalho Duplamente Comprimida
+			NeutronCollectorTile.MapEntry: Coletor de Nêutrons
+			NeutroniumCompressorTile.MapEntry: Compressor de Nêutrons
+		}
+
+		Items: {
+			CosmicMeatballs: {
+				DisplayName: Almôndegas Cosmicas
+				Tooltip: ""
+			}
+
+			EndestPearl: {
+				DisplayName: Pérola Endest
+				Tooltip: ""
+			}
+
+			MatterCluster: {
+				DisplayName: Aglomerado de Matéria
+				Tooltip:
+					'''
+					
+					[c/404040:Use para desconstruir.]
+					[c/404040:Segure SHIFT para ver o seu conteúdo.]
+					'''
+			}
+
+			UltimateStew: {
+				DisplayName: Sopa Definitiva
+				Tooltip: ""
+			}
+
+			InfinityIngot: {
+				DisplayName: Barra do Infinito
+				Tooltip: "[c/404040:A fúria do universo na palma da sua mão.]"
+			}
+
+			NeutroniumIngot: {
+				DisplayName: Barra de Neutronium
+				Tooltip: "[c/404040:O denso coração de uma estrela em uma conveniente forma de barra.]"
+			}
+
+			NeutroniumNugget: {
+				DisplayName: Pepita de Neutronium
+				Tooltip: "[c/404040:Quase 35.6 milhões de toneladas métricas.]"
+			}
+
+			PileOfNeutrons: {
+				DisplayName: Pilha de Nêutrons
+				Tooltip: "[c/404040:Não pense muito sobre isso.]"
+			}
+
+			CompressedCraftingTable: {
+				DisplayName: Bancada de Trabalho Comprimida
+				Tooltip: ""
+			}
+
+			ExtremeCraftingTable: {
+				DisplayName: Bancada de Trabalho Extrema
+				Tooltip: ""
+			}
+
+			InfinityBlock: {
+				DisplayName: Bloco do Infinito
+				Tooltip: ""
+			}
+
+			NeutroniumBlock: {
+				DisplayName: Bloco de Neutronium
+				Tooltip: ""
+			}
+
+			AdamantiteSingularity: {
+				DisplayName: Singularidade de Adamantita
+				// Tooltip: ""
+			}
+
+			AmberSingularity: {
+				DisplayName: Singularidade de Âmbar
+				// Tooltip: ""
+			}
+
+			AmethystSingularity: {
+				DisplayName: Singularidade de Ametista
+				// Tooltip: ""
+			}
+
+			CobaltSingularity: {
+				DisplayName: Singularidade de Cobalto
+				// Tooltip: ""
+			}
+
+			CopperSingularity: {
+				DisplayName: Singularidade de Cobre
+				// Tooltip: ""
+			}
+
+			DemoniteSingularity: {
+				DisplayName: Singularidade de Demonita
+				// Tooltip: ""
+			}
+
+			DiamondSingularity: {
+				DisplayName: Singularidade de Diamante
+				// Tooltip: ""
+			}
+
+			EmeraldSingularity: {
+				DisplayName: Singularidade de Esmeralda
+				// Tooltip: ""
+			}
+
+			GoldSingularity: {
+				DisplayName: Singularidade de Ouro
+				// Tooltip: ""
+			}
+
+			HallowedSingularity: {
+				DisplayName: Singularidade de Hallowed
+				// Tooltip: ""
+			}
+
+			HellstoneSingularity: {
+				DisplayName: Singularidade de Hellstone
+				// Tooltip: ""
+			}
+
+			IronSingularity: {
+				DisplayName: Singularidade de Ferro
+				// Tooltip: ""
+			}
+
+			LeadSingularity: {
+				DisplayName: Singularidade de Chumbo
+				// Tooltip: ""
+			}
+
+			LunarSingularity: {
+				DisplayName: Singularidade Lunar
+				// Tooltip: ""
+			}
+
+			MeteoriteSingularity: {
+				DisplayName: Singularidade de Meteorito
+				// Tooltip: ""
+			}
+
+			MythrilSingularity: {
+				DisplayName: Singularidade de Mithril
+				// Tooltip: ""
+			}
+
+			OrichalcumSingularity: {
+				DisplayName: Singularidade de Oricalco
+				// Tooltip: ""
+			}
+
+			PalladiumSingularity: {
+				DisplayName: Singularidade de Paládio
+				// Tooltip: ""
+			}
+
+			PlatinumSingularity: {
+				DisplayName: Singularidade de Platina
+				// Tooltip: ""
+			}
+
+			RubySingularity: {
+				DisplayName: Singularidade de Rubi
+				// Tooltip: ""
+			}
+
+			SapphireSingularity: {
+				DisplayName: Singularidade de Safira
+				// Tooltip: ""
+			}
+
+			ShroomiteSingularity: {
+				DisplayName: Singularidade de Shroomite
+				// Tooltip: ""
+			}
+
+			SilverSingularity: {
+				DisplayName: Singularidade de Prata
+				// Tooltip: ""
+			}
+
+			SpectreSingularity: {
+				DisplayName: Singularidade de Spectre
+				// Tooltip: ""
+			}
+
+			TinSingularity: {
+				DisplayName: Singularidade de Estanho
+				// Tooltip: ""
+			}
+
+			TitaniumSingularity: {
+				DisplayName: Singularidade de Titânio
+				// Tooltip: ""
+			}
+
+			TopazSingularity: {
+				DisplayName: Singularidade de Topázio
+				// Tooltip: ""
+			}
+
+			TungstenSingularity: {
+				DisplayName: Singularidade de Tungstênio
+				// Tooltip: ""
+			}
+
+			NatureRuin: {
+				DisplayName: Ruína da Natureza
+				Tooltip: ""
+			}
+
+			PlanetEater: {
+				DisplayName: Comedor de Planetas
+				Tooltip: ""
+			}
+
+			WorldBreaker: {
+				DisplayName: Destruidor de Mundos
+				Tooltip: Fortune X
+			}
+
+			LongbowOfTheHeavens: {
+				DisplayName: Arco Longo dos Céus
+				// Tooltip: ""
+			}
+
+			SwordOfTheCosmos: {
+				DisplayName: Espada do Cosmos
+				Tooltip: Infinito
+			}
+
+			CrystalMatrixIngot: {
+				DisplayName: Barra de Cristal Matriz
+				Tooltip: "[c/404040:Essa não é nem minha forma final.]"
+			}
+
+			CrystalMatrix: {
+				DisplayName: Cristal Matriz
+				Tooltip: ""
+			}
+
+			InfinityCatalyst: {
+				DisplayName: Catalisador do Infinito
+				Tooltip: "[c/404040:Ele é tudo e tudo é ele.]"
+			}
+
+			RecordFragment: {
+				DisplayName: Fragmento de Disco
+				Tooltip: "[c/404040:Ele gosta de acreditam em liberdade musical~]"
+			}
+
+			DiamondLattice: {
+				DisplayName: Treliça de Diamante
+				Tooltip: ""
+			}
+
+			DoubleCompressedCraftingTable: {
+				DisplayName: Bancada de Trabalho Duplamente Comprimida
+				Tooltip: ""
+			}
+
+			NeutronCollector: {
+				DisplayName: Coletor de Nêutrons
+				Tooltip: ""
+			}
+
+			NeutroniumCompressor: {
+				DisplayName: Compressor de Nêutrons
+				Tooltip: ""
+			}
+
+			ChlorophyteSingularity: {
+				DisplayName: Singularidade de Clorofita
+				// Tooltip: ""
+			}
+
+			CrimtaneSingularity: {
+				DisplayName: Singularidade de Crimtane
+				// Tooltip: ""
+			}
+
+			InfinityHelmet: {
+				DisplayName: Elmo do Infinito
+				Tooltip: ""
+			}
+
+			InfinityChestPlate: {
+				DisplayName: Peitoral do Infinito
+				Tooltip: ""
+			}
+
+			InfinityBoots: {
+				DisplayName: Botas do Infinito
+				// Tooltip: ""
+			}
+
+			NetherStar: {
+				DisplayName: Estrela do Nether
+				Tooltip: ""
+			}
+		}
+
+		Projectiles: {
+			SwordOfTheCosmosProj.DisplayName: Espada do Cosmos
+			EndestPearlProjectile.DisplayName: Pérola Endest
+			HeavenArrow.DisplayName: Flecha Celestial
+			LongbowOfTheHeavensProj.DisplayName: Arco Longo dos Céus
+			AvaritiaMarkProj.DisplayName: Marca de Avaritia
+		}
+	}
+}

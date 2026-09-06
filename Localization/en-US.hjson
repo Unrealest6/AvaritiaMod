@@ -1,0 +1,334 @@
+Mods: {
+	AvaritiaMod: {
+		Tiles: {
+			CompressedCraftingTableTile.MapEntry: Compressed Crafting Table
+			ExtremeCraftingTableTile.MapEntry: Extreme Crafting Table
+			DoubleCompressedCraftingTableTile.MapEntry: Double Compressed Crafting Table
+			NeutronCollectorTile.MapEntry: Neutron Collector
+			NeutroniumCompressorTile.MapEntry: Neutronium Compressor
+		}
+
+		Items: {
+			CosmicMeatballs: {
+				DisplayName: Cosmic Meatballs
+				Tooltip: ""
+			}
+
+			EndestPearl: {
+				DisplayName: Endest Pearl
+				Tooltip: ""
+			}
+
+			MatterCluster: {
+				DisplayName: Matter Cluster
+				Tooltip:
+					'''
+
+
+					[c/404040:Use to deconstruct.]
+					[c/404040:Hold SHIFT for contents]
+					'''
+			}
+
+			UltimateStew: {
+				DisplayName: Ultimate Stew
+				Tooltip: ""
+			}
+
+			InfinityIngot: {
+				DisplayName: Infinity Ingot
+				Tooltip: "[c/404040:The fury of the universe in the palm of your hand.]"
+			}
+
+			NeutroniumIngot: {
+				DisplayName: Neutronium Ingot
+				Tooltip: "[c/404040:The dense heart of a star in convenient ingot form.]"
+			}
+
+			NeutroniumNugget: {
+				DisplayName: Neutronium Nugget
+				Tooltip: "[c/404040:About 35.6 million metric tons.]"
+			}
+
+			PileOfNeutrons: {
+				DisplayName: Pile Of Neutrons
+				Tooltip: "[c/404040:Try not to think about it.]"
+			}
+
+			CompressedCraftingTable: {
+				DisplayName: Compressed Crafting Table
+				Tooltip: ""
+			}
+
+			ExtremeCraftingTable: {
+				DisplayName: Extreme Crafting Table
+				Tooltip: ""
+			}
+
+			InfinityBlock: {
+				DisplayName: Infinity Block
+				Tooltip: ""
+			}
+
+			NeutroniumBlock: {
+				DisplayName: Neutronium Block
+				Tooltip: ""
+			}
+
+			AdamantiteSingularity: {
+				DisplayName: Adamantite Singularity
+				Tooltip: ""
+			}
+
+			AmberSingularity: {
+				DisplayName: Amber Singularity
+				Tooltip: ""
+			}
+
+			AmethystSingularity: {
+				DisplayName: Amethyst Singularity
+				Tooltip: ""
+			}
+
+			CobaltSingularity: {
+				DisplayName: Cobalt Singularity
+				Tooltip: ""
+			}
+
+			CopperSingularity: {
+				DisplayName: Copper Singularity
+				Tooltip: ""
+			}
+
+			DemoniteSingularity: {
+				DisplayName: Demonite Singularity
+				Tooltip: ""
+			}
+
+			DiamondSingularity: {
+				DisplayName: Diamond Singularity
+				Tooltip: ""
+			}
+
+			EmeraldSingularity: {
+				DisplayName: Emerald Singularity
+				Tooltip: ""
+			}
+
+			GoldSingularity: {
+				DisplayName: Gold Singularity
+				Tooltip: ""
+			}
+
+			HallowedSingularity: {
+				DisplayName: Hallowed Singularity
+				Tooltip: ""
+			}
+
+			HellstoneSingularity: {
+				DisplayName: Hellstone Singularity
+				Tooltip: ""
+			}
+
+			IronSingularity: {
+				DisplayName: Iron Singularity
+				Tooltip: ""
+			}
+
+			LeadSingularity: {
+				DisplayName: Lead Singularity
+				Tooltip: ""
+			}
+
+			LunarSingularity: {
+				DisplayName: Lunar Singularity
+				Tooltip: ""
+			}
+
+			MeteoriteSingularity: {
+				DisplayName: Meteorite Singularity
+				Tooltip: ""
+			}
+
+			MythrilSingularity: {
+				DisplayName: Mythril Singularity
+				Tooltip: ""
+			}
+
+			OrichalcumSingularity: {
+				DisplayName: Orichalcum Singularity
+				Tooltip: ""
+			}
+
+			PalladiumSingularity: {
+				DisplayName: Palladium Singularity
+				Tooltip: ""
+			}
+
+			PlatinumSingularity: {
+				DisplayName: Platinum Singularity
+				Tooltip: ""
+			}
+
+			RubySingularity: {
+				DisplayName: Ruby Singularity
+				Tooltip: ""
+			}
+
+			SapphireSingularity: {
+				DisplayName: Sapphire Singularity
+				Tooltip: ""
+			}
+
+			ShroomiteSingularity: {
+				DisplayName: Shroomite Singularity
+				Tooltip: ""
+			}
+
+			SilverSingularity: {
+				DisplayName: Silver Singularity
+				Tooltip: ""
+			}
+
+			SpectreSingularity: {
+				DisplayName: Spectre Singularity
+				Tooltip: ""
+			}
+
+			TinSingularity: {
+				DisplayName: Tin Singularity
+				Tooltip: ""
+			}
+
+			TitaniumSingularity: {
+				DisplayName: Titanium Singularity
+				Tooltip: ""
+			}
+
+			TopazSingularity: {
+				DisplayName: Topaz Singularity
+				Tooltip: ""
+			}
+
+			TungstenSingularity: {
+				DisplayName: Tungsten Singularity
+				Tooltip: ""
+			}
+
+			NatureRuin: {
+				DisplayName: Nature's Ruin
+				Tooltip: ""
+			}
+
+			PlanetEater: {
+				DisplayName: Planet Eater
+				Tooltip: ""
+			}
+
+			WorldBreaker: {
+				DisplayName: World Breaker
+				Tooltip: Fortune X
+			}
+
+			LongbowOfTheHeavens: {
+				DisplayName: Longbow Of The Heavens
+				Tooltip: ""
+			}
+
+			SwordOfTheCosmos: {
+				DisplayName: Sword Of The Cosmos
+				Tooltip: Infinity
+			}
+
+			CrystalMatrixIngot: {
+				DisplayName: Crystal Matrix Ingot
+				Tooltip: "[c/404040:This isn't even its final form.]"
+			}
+
+			CrystalMatrix: {
+				DisplayName: Crystal Matrix
+				Tooltip: ""
+			}
+
+			InfinityCatalyst: {
+				DisplayName: Infinity Catalyst
+				Tooltip: "[c/404040:One is all and all is one.]"
+			}
+
+			RecordFragment: {
+				DisplayName: Record Fragment
+				Tooltip: "[c/404040:One likes to believe in the freedom of music~]"
+			}
+
+			DiamondLattice: {
+				DisplayName: Diamond Lattice
+				Tooltip: ""
+			}
+
+			DoubleCompressedCraftingTable: {
+				DisplayName: Double Compressed Crafting Table
+				Tooltip: ""
+			}
+
+			NeutronCollector: {
+				DisplayName: Neutron Collector
+				Tooltip: ""
+			}
+
+			NeutroniumCompressor: {
+				DisplayName: Neutronium Compressor
+				Tooltip: ""
+			}
+
+			ChlorophyteSingularity: {
+				DisplayName: Chlorophyte Singularity
+				Tooltip: ""
+			}
+
+			CrimtaneSingularity: {
+				DisplayName: Crimtane Singularity
+				Tooltip: ""
+			}
+
+			InfinityHelmet: {
+				DisplayName: Infinity Helmet
+				Tooltip: ""
+			}
+
+			InfinityChestPlate: {
+				DisplayName: Infinity Breastplate
+				Tooltip: ""
+			}
+
+			InfinityBoots: {
+				DisplayName: Infinity Boots
+				Tooltip: SANIC
+			}
+
+			NetherStar: {
+				DisplayName: Nether Star
+				Tooltip: ""
+			}
+		}
+
+		Projectiles: {
+			SwordOfTheCosmosProj.DisplayName: Sword Of The Cosmos
+			EndestPearlProjectile.DisplayName: Endest Pearl
+			HeavenArrow.DisplayName: Heaven Arrow
+			LongbowOfTheHeavensProj.DisplayName: Longbow Of The Heavens Proj
+			AvaritiaMarkProj.DisplayName: Avaritia Mark Proj
+		}
+
+		Buffs: {
+			CelestiallyCharged1: {
+				DisplayName: Celestially Charged
+				Description: Celestial surge to all stats
+			}
+
+			CelestiallyCharged2: {
+				DisplayName: Celestially Charged
+				Description: Celestial surge to all stats
+			}
+		}
+	}
+}

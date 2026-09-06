@@ -1,0 +1,321 @@
+﻿Mods: {
+	AvaritiaMod: {
+		Tiles: {
+			CompressedCraftingTableTile.MapEntry: Сжатый верстак
+			ExtremeCraftingTableTile.MapEntry: Экстремальный верстак
+			DoubleCompressedCraftingTableTile.MapEntry: Дважды сжатый верстак
+			NeutronCollectorTile.MapEntry: Сборщик нейтрония
+			NeutroniumCompressorTile.MapEntry: Компрессор нейтрония
+		}
+
+		Items: {
+			CosmicMeatballs: {
+				DisplayName: Космические фрикадельки
+				Tooltip: ""
+			}
+
+			EndestPearl: {
+				DisplayName: Всепоглощающая жемчужина
+				Tooltip: ""
+			}
+
+			MatterCluster: {
+				DisplayName: Кластер материи
+				Tooltip:
+					'''
+					
+					[c/404040:ПКМ для разрушения.]
+					[c/404040:Зажмите SHIFT для подробностей.]
+					'''
+			}
+
+			UltimateStew: {
+				DisplayName: Максимальное рагу
+				Tooltip: ""
+			}
+
+			InfinityIngot: {
+				DisplayName: Слиток бесконечности
+				Tooltip: "[c/404040:Вся мощь вселенной в твоей руке.]"
+			}
+
+			NeutroniumIngot: {
+				DisplayName: Слиток нейтрония
+				Tooltip: "[c/404040:Плотное сердце звезды в удобной форме слитка.]"
+			}
+
+			NeutroniumNugget: {
+				DisplayName: Самородок нейтрония
+				Tooltip: "[c/404040:Около 35.6 миллионов тонн.]"
+			}
+
+			PileOfNeutrons: {
+				DisplayName: Пылинка нейтрония
+				Tooltip: "[c/404040:Попытайся забыть об этом.]"
+			}
+
+			CompressedCraftingTable: {
+				DisplayName: Сжатый верстак
+				Tooltip: ""
+			}
+
+			ExtremeCraftingTable: {
+				DisplayName: Экстремальный верстак
+				Tooltip: ""
+			}
+
+			InfinityBlock: {
+				DisplayName: Блок бесконечности
+				Tooltip: ""
+			}
+
+			NeutroniumBlock: {
+				DisplayName: Блок нейтрония
+				Tooltip: ""
+			}
+
+			AdamantiteSingularity: {
+				DisplayName: Адамантитовая сингулярность
+				// Tooltip: ""
+			}
+
+			AmberSingularity: {
+				DisplayName: Янтарная сингулярность
+				// Tooltip: ""
+			}
+
+			AmethystSingularity: {
+				DisplayName: Аметистовая сингулярность
+				// Tooltip: ""
+			}
+
+			CobaltSingularity: {
+				DisplayName: Кобальтовая сингулярность
+				// Tooltip: ""
+			}
+
+			CopperSingularity: {
+				DisplayName: Медная сингулярность
+				// Tooltip: ""
+			}
+
+			DemoniteSingularity: {
+				DisplayName: Демонитовая сингулярность
+				// Tooltip: ""
+			}
+
+			DiamondSingularity: {
+				DisplayName: Алмазная сингулярность
+				// Tooltip: ""
+			}
+
+			EmeraldSingularity: {
+				DisplayName: Изумрудная сингулярность
+				// Tooltip: ""
+			}
+
+			GoldSingularity: {
+				DisplayName: Золотая сингулярность
+				// Tooltip: ""
+			}
+
+			HallowedSingularity: {
+				DisplayName: Святая сингулярность
+				// Tooltip: ""
+			}
+
+			HellstoneSingularity: {
+				DisplayName: Адская сингулярность
+				// Tooltip: ""
+			}
+
+			IronSingularity: {
+				DisplayName: Железная сингулярность
+				// Tooltip: ""
+			}
+
+			LeadSingularity: {
+				DisplayName: Свинцовая сингулярность
+				// Tooltip: ""
+			}
+
+			LunarSingularity: {
+				DisplayName: Лунная сингулярность
+				// Tooltip: ""
+			}
+
+			MeteoriteSingularity: {
+				DisplayName: Метеоритная сингулярность
+				// Tooltip: ""
+			}
+
+			MythrilSingularity: {
+				DisplayName: Мифриловая сингулярность
+				// Tooltip: ""
+			}
+
+			OrichalcumSingularity: {
+				DisplayName: Орихалковая сингулярность
+				// Tooltip: ""
+			}
+
+			PalladiumSingularity: {
+				DisplayName: Палладиевая сингулярность
+				// Tooltip: ""
+			}
+
+			PlatinumSingularity: {
+				DisplayName: Платиновая сингулярность
+				// Tooltip: ""
+			}
+
+			RubySingularity: {
+				DisplayName: Рубиновая сингулярность
+				// Tooltip: ""
+			}
+
+			SapphireSingularity: {
+				DisplayName: Сапфировая сингулярность
+				// Tooltip: ""
+			}
+
+			ShroomiteSingularity: {
+				DisplayName: Грибная сингулярность
+				// Tooltip: ""
+			}
+
+			SilverSingularity: {
+				DisplayName: Серебряная сингулярность
+				// Tooltip: ""
+			}
+
+			SpectreSingularity: {
+				DisplayName: Призрачная сингулярность
+				// Tooltip: ""
+			}
+
+			TinSingularity: {
+				DisplayName: Оловянная сингулярность
+				// Tooltip: ""
+			}
+
+			TitaniumSingularity: {
+				DisplayName: Титановая сингулярность
+				// Tooltip: ""
+			}
+
+			TopazSingularity: {
+				DisplayName: Топазовая сингулярность
+				// Tooltip: ""
+			}
+
+			TungstenSingularity: {
+				DisplayName: Вольфрамовая сингулярность
+				// Tooltip: ""
+			}
+
+			NatureRuin: {
+				DisplayName: Уничтожитель Природы
+				Tooltip: ""
+			}
+
+			PlanetEater: {
+				DisplayName: Пожиратель Планет
+				Tooltip: ""
+			}
+
+			WorldBreaker: {
+				DisplayName: Разрушитель Мира
+				Tooltip: Fortune X
+			}
+
+			LongbowOfTheHeavens: {
+				DisplayName: Лук Небес
+				// Tooltip: ""
+			}
+
+			SwordOfTheCosmos: {
+				DisplayName: Меч Космоса
+				Tooltip: Бесконечный
+			}
+
+			CrystalMatrixIngot: {
+				DisplayName: Кристально-матричный слиток
+				Tooltip: "[c/404040:Это ещё не последняя форма.]"
+			}
+
+			CrystalMatrix: {
+				DisplayName: Кристалическая матрица
+				Tooltip: ""
+			}
+
+			InfinityCatalyst: {
+				DisplayName: Катализатор бесконечности
+				Tooltip: "[c/404040:Всё в одном и одно во всём.]"
+			}
+
+			RecordFragment: {
+				DisplayName: Осколок пластинки
+				Tooltip: "[c/404040:Кто-то любит верить в чистоту музыки~]"
+			}
+
+			DiamondLattice: {
+				DisplayName: Алмазная решётка
+				Tooltip: ""
+			}
+
+			DoubleCompressedCraftingTable: {
+				DisplayName: Дважды сжатый верстак
+				Tooltip: ""
+			}
+
+			NeutronCollector: {
+				DisplayName: Сборщик нейтрония
+				Tooltip: ""
+			}
+
+			NeutroniumCompressor: {
+				DisplayName: Компрессор нейтрония
+				Tooltip: ""
+			}
+
+			ChlorophyteSingularity: {
+				DisplayName: Хлорофитовая сингулярность
+				// Tooltip: ""
+			}
+
+			CrimtaneSingularity: {
+				DisplayName: Кримтановая сингулярность
+				// Tooltip: ""
+			}
+
+			InfinityHelmet: {
+				DisplayName: Шлем Бесконечности
+				Tooltip: ""
+			}
+
+			InfinityChestPlate: {
+				DisplayName: Нагрудник Бесконечности
+				Tooltip: ""
+			}
+
+			InfinityBoots: {
+				DisplayName: Ботинки Бесконечности
+				// Tooltip: ""
+			}
+
+			NetherStar: {
+				DisplayName: Звезда Нижнего мира
+				Tooltip: ""
+			}
+		}
+
+		Projectiles: {
+			SwordOfTheCosmosProj.DisplayName: Меч Космоса
+			EndestPearlProjectile.DisplayName: Всепоглощающая жемчужина
+			HeavenArrow.DisplayName: Небесная стрела
+			LongbowOfTheHeavensProj.DisplayName: Лук Небес
+			AvaritiaMarkProj.DisplayName: Метка Аваритии
+		}
+	}
+}

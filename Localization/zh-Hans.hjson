@@ -1,0 +1,334 @@
+Mods: {
+	AvaritiaMod: {
+		Tiles: {
+			CompressedCraftingTableTile.MapEntry: 压缩工作台
+			ExtremeCraftingTableTile.MapEntry: 终极工作台
+			DoubleCompressedCraftingTableTile.MapEntry: 二重压缩工作台
+			NeutronCollectorTile.MapEntry: 中子态素收集器
+			NeutroniumCompressorTile.MapEntry: 中子态素压缩机
+		}
+
+		Items: {
+			CosmicMeatballs: {
+				DisplayName: 寰宇肉丸
+				Tooltip: ""
+			}
+
+			EndestPearl: {
+				DisplayName: 终望珍珠
+				Tooltip: ""
+			}
+
+			MatterCluster: {
+				DisplayName: 物质团
+				Tooltip:
+					'''
+
+
+					[c/404040:用于毁灭一切。]
+					[c/404040:按下SHIFT显示详细信息。]
+					'''
+			}
+
+			UltimateStew: {
+				DisplayName: 超级煲
+				Tooltip: ""
+			}
+
+			InfinityIngot: {
+				DisplayName: 无尽之锭
+				Tooltip: "[c/404040:汝掌心中者，寰宇之力也。]"
+			}
+
+			NeutroniumIngot: {
+				DisplayName: 中子锭
+				Tooltip: "[c/404040:致密恒星之心，化为一锭。]"
+			}
+
+			NeutroniumNugget: {
+				DisplayName: 中子素粒
+				Tooltip: "[c/404040:大约3560万吨吧。]"
+			}
+
+			PileOfNeutrons: {
+				DisplayName: 中子素尘埃
+				Tooltip: "[c/404040:尽量不要去想它。]"
+			}
+
+			CompressedCraftingTable: {
+				DisplayName: 压缩工作台
+				Tooltip: ""
+			}
+
+			ExtremeCraftingTable: {
+				DisplayName: 终极工作台
+				Tooltip: ""
+			}
+
+			InfinityBlock: {
+				DisplayName: 无尽之块
+				Tooltip: ""
+			}
+
+			NeutroniumBlock: {
+				DisplayName: 中子态素块
+				Tooltip: ""
+			}
+
+			AdamantiteSingularity: {
+				DisplayName: 奇点-精金
+				// Tooltip: ""
+			}
+
+			AmberSingularity: {
+				DisplayName: 奇点-琥珀
+				// Tooltip: ""
+			}
+
+			AmethystSingularity: {
+				DisplayName: 奇点-紫晶
+				// Tooltip: ""
+			}
+
+			CobaltSingularity: {
+				DisplayName: 奇点-钴
+				// Tooltip: ""
+			}
+
+			CopperSingularity: {
+				DisplayName: 奇点-铜
+				// Tooltip: ""
+			}
+
+			DemoniteSingularity: {
+				DisplayName: 奇点-魔矿
+				// Tooltip: ""
+			}
+
+			DiamondSingularity: {
+				DisplayName: 奇点-钻石
+				// Tooltip: ""
+			}
+
+			EmeraldSingularity: {
+				DisplayName: 奇点-翡翠
+				// Tooltip: ""
+			}
+
+			GoldSingularity: {
+				DisplayName: 奇点-金
+				// Tooltip: ""
+			}
+
+			HallowedSingularity: {
+				DisplayName: 奇点-神圣
+				// Tooltip: ""
+			}
+
+			HellstoneSingularity: {
+				DisplayName: 奇点-狱石
+				// Tooltip: ""
+			}
+
+			IronSingularity: {
+				DisplayName: 奇点-铁
+				// Tooltip: ""
+			}
+
+			LeadSingularity: {
+				DisplayName: 奇点-铅
+				// Tooltip: ""
+			}
+
+			LunarSingularity: {
+				DisplayName: 奇点-夜明
+				// Tooltip: ""
+			}
+
+			MeteoriteSingularity: {
+				DisplayName: 奇点-陨石
+				// Tooltip: ""
+			}
+
+			MythrilSingularity: {
+				DisplayName: 奇点-秘银
+				// Tooltip: ""
+			}
+
+			OrichalcumSingularity: {
+				DisplayName: 奇点-山铜
+				// Tooltip: ""
+			}
+
+			PalladiumSingularity: {
+				DisplayName: 奇点-钯金
+				// Tooltip: ""
+			}
+
+			PlatinumSingularity: {
+				DisplayName: 奇点-铂
+				// Tooltip: ""
+			}
+
+			RubySingularity: {
+				DisplayName: 奇点-红玉
+				// Tooltip: ""
+			}
+
+			SapphireSingularity: {
+				DisplayName: 奇点-蓝宝石
+				// Tooltip: ""
+			}
+
+			ShroomiteSingularity: {
+				DisplayName: 奇点-蘑菇
+				// Tooltip: ""
+			}
+
+			SilverSingularity: {
+				DisplayName: 奇点-银
+				// Tooltip: ""
+			}
+
+			SpectreSingularity: {
+				DisplayName: 奇点-幽灵
+				// Tooltip: ""
+			}
+
+			TinSingularity: {
+				DisplayName: 奇点-锡
+				// Tooltip: ""
+			}
+
+			TitaniumSingularity: {
+				DisplayName: 奇点-钛金
+				// Tooltip: ""
+			}
+
+			TopazSingularity: {
+				DisplayName: 奇点-黄玉
+				// Tooltip: ""
+			}
+
+			TungstenSingularity: {
+				DisplayName: 奇点-钨
+				// Tooltip: ""
+			}
+
+			NatureRuin: {
+				DisplayName: 自然荒芜之斧
+				Tooltip: ""
+			}
+
+			PlanetEater: {
+				DisplayName: 星球吞噬之锹
+				Tooltip: ""
+			}
+
+			WorldBreaker: {
+				DisplayName: 世界崩解之镐
+				Tooltip: 时运 X
+			}
+
+			LongbowOfTheHeavens: {
+				DisplayName: 天堂陨落长弓
+				// Tooltip: ""
+			}
+
+			SwordOfTheCosmos: {
+				DisplayName: 寰宇支配之剑
+				// Tooltip: Infinity
+			}
+
+			CrystalMatrixIngot: {
+				DisplayName: 水晶矩阵锭
+				Tooltip: "[c/404040:这甚至不是最终形态。]"
+			}
+
+			CrystalMatrix: {
+				DisplayName: 水晶矩阵
+				Tooltip: ""
+			}
+
+			InfinityCatalyst: {
+				DisplayName: 无尽催化剂
+				Tooltip: "[c/404040:一即全，全即一。]"
+			}
+
+			RecordFragment: {
+				DisplayName: 唱片碎片
+				Tooltip: "[c/404040:一位笃信音乐带来的自由的人~]"
+			}
+
+			DiamondLattice: {
+				DisplayName: 钻石晶格
+				Tooltip: ""
+			}
+
+			DoubleCompressedCraftingTable: {
+				DisplayName: 二重压缩工作台
+				Tooltip: ""
+			}
+
+			NeutronCollector: {
+				DisplayName: 中子态素收集器
+				Tooltip: ""
+			}
+
+			NeutroniumCompressor: {
+				DisplayName: 中子态素压缩机
+				Tooltip: ""
+			}
+
+			ChlorophyteSingularity: {
+				DisplayName: 奇点-叶绿
+				// Tooltip: ""
+			}
+
+			CrimtaneSingularity: {
+				DisplayName: 奇点-猩红
+				// Tooltip: ""
+			}
+
+			InfinityHelmet: {
+				DisplayName: 无尽头盔
+				Tooltip: ""
+			}
+
+			InfinityChestPlate: {
+				DisplayName: 无尽胸甲
+				Tooltip: ""
+			}
+
+			InfinityBoots: {
+				DisplayName: 无尽靴子
+				// Tooltip: SANIC
+			}
+
+			NetherStar: {
+				DisplayName: 下界之星
+				Tooltip: ""
+			}
+		}
+
+		Projectiles: {
+			SwordOfTheCosmosProj.DisplayName: 寰宇支配之剑
+			EndestPearlProjectile.DisplayName: 终望珍珠
+			HeavenArrow.DisplayName: 天堂箭
+			LongbowOfTheHeavensProj.DisplayName: Longbow Of The Heavens Proj
+			AvaritiaMarkProj.DisplayName: Avaritia Mark Proj
+		}
+
+		Buffs: {
+			CelestiallyCharged1: {
+				DisplayName: 天能充盈
+				Description: 所有属性天能暴增
+			}
+
+			CelestiallyCharged2: {
+				DisplayName: 天能充盈
+				Description: 所有属性天能暴增
+			}
+		}
+	}
+}
