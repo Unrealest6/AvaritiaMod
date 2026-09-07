@@ -28,16 +28,18 @@
                 }
                 else
                 {
+                    int x = i;
+                    int y = j;
                     if (tile.TileFrameX % 36 != 0)
                     {
-                        i--;
+                        x--;
                     }
                     if (tile.TileFrameY % 36 != 0)
                     {
-                        j--;
+                        y--;
                     }
-                    int chestIndex = Chest.FindChest(i, j);
-                    int chestEmptyIndex = Chest.FindEmptyChest(i, j);
+                    int chestIndex = Chest.FindChest(x, y);
+                    int chestEmptyIndex = Chest.FindEmptyChest(x, y);
                     if (chestIndex != -1 && chestEmptyIndex == -1)
                     {
                         return true;
