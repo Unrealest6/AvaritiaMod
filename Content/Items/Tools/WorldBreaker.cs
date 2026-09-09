@@ -35,23 +35,17 @@
             Item.useAnimation = 15;
             Item.useStyle = ItemUseStyleID.Swing;
             Item.knockBack = 4;
-            Item.value = 0;
             Item.rare = ModContent.RarityType<LightRedRarity>();
             Item.UseSound = SoundID.Item1;
             Item.useTurn = true;
-            Item.autoReuse = false;
-            Item.noUseGraphic = false;
-            Item.noMelee = false;
         }
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
             foreach (TooltipLine line in tooltips.Where(line => line.Mod == "Terraria"))
             {
-                switch (line.Name)
+                if (line.Name == "PickPower")
                 {
-                    case "PickPower":
-                        line.Hide();
-                        break;
+                    line.Hide();
                 }
             }
         }

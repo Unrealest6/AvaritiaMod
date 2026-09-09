@@ -6,7 +6,7 @@
         internal bool CosmicSphereActive { get; set; }
         internal int CosmicSphereStartTime { get; set; }
         internal CosmicParticle? CosmicParticles { get; private set; }
-        internal SphereLightning? SphereLightning { get; private set; }
+        internal CosmicLightning? SphereLightning { get; private set; }
         internal sbyte SwordOfTheCosmosFlyTimer { get; set; }
         internal float SwordOfTheCosmosFlyRotation { get; set; }
         internal bool SwordOfTheCosmosFlyHolding { get; set; }
@@ -24,12 +24,12 @@
         public override void Initialize()
         {
             CosmicParticles = new CosmicParticle();
-            SphereLightning = new SphereLightning();
+            SphereLightning = new CosmicLightning();
         }
         public override void OnEnterWorld()
         {
             CosmicParticles = new CosmicParticle();
-            SphereLightning = new SphereLightning();
+            SphereLightning = new CosmicLightning();
             _lastSuit = false;
 
             // 客户端请求服务器发送所有在线玩家的星空状态

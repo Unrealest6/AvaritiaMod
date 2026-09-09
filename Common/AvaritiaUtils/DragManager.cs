@@ -1,7 +1,13 @@
 ﻿namespace AvaritiaMod.Common.AvaritiaUtils
 {
+    /// <summary>
+    /// 拖拽管理器
+    /// </summary>
     public static class DragManager
     {
+        /// <summary>
+        /// 拖拽类型
+        /// </summary>
         public enum DragType
         {
             None,
@@ -9,7 +15,13 @@
             Right
         }
         public static bool JustReleased { get; set; }
+        /// <summary>
+        /// 开始拖拽的类型
+        /// </summary>
         public static DragType StartType { get; private set; }
+        /// <summary>
+        /// 拖拽开始槽位
+        /// </summary>
         public static AvaritiaItemSlot? StartSlot { get; private set; }
         public static bool IsDragging => _currentDrag != DragType.None;
         public static bool IsInRollbackCooldown => _rollbackFrame + 12 >= Main.GameUpdateCount;

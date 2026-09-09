@@ -1,10 +1,25 @@
 ﻿namespace AvaritiaMod.Common.AvaritiaUtils
 {
-    public sealed class SphereLightning
+    /// <summary>
+    /// 宇宙闪电
+    /// </summary>
+    public sealed class CosmicLightning
     {
+        /// <summary>
+        /// 活跃的闪电列表
+        /// </summary>
         private readonly List<LightningBolt> _activeBolts = [];
+        /// <summary>
+        /// 生成计数器
+        /// </summary>
         private int _spawnTimer;
-        public void UpdateAndDraw(SpriteBatch sb, Vector2 center, float radius)
+        /// <summary>
+        /// 更新和绘制全部闪电
+        /// </summary>
+        /// <param name="spriteBatch"></param>
+        /// <param name="center">闪电环绕中心位置</param>
+        /// <param name="radius">闪电覆盖半径大小</param>
+        public void UpdateAndDrawAll(SpriteBatch spriteBatch, Vector2 center, float radius)
         {
             _spawnTimer++;
             if (_spawnTimer > 5)
@@ -15,39 +30,78 @@
                     _activeBolts.Add(new LightningBolt(center, radius, Main.rand.NextFloat(MathHelper.TwoPi), Main.rand.NextFloat(-0.8f, 0.8f)));
                 }
             }
-            sb.End();
-            sb.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
+            spriteBatch.End();
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
             for (int i = _activeBolts.Count - 1; i >= 0; i--)
             {
                 _activeBolts[i].Update();
-                if (_activeBolts[i].IsDead)
+                if (!_activeBolts[i].IsActive)
                 {
                     _activeBolts.RemoveAt(i);
                 }
                 else
                 {
-                    _activeBolts[i].Draw(sb);
+                    _activeBolts[i].Draw(spriteBatch);
                 }
             }
-            sb.End();
-            sb.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
+            spriteBatch.End();
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
         }
+        /// <summary>
+        /// 清除所有闪电
+        /// </summary>
         public void Clear()
         {
             _activeBolts.Clear();
             _spawnTimer = 0;
         }
     }
+    /// <summary>
+    /// 闪电特效
+    /// </summary>
     public sealed class LightningBolt
     {
-        public bool IsDead => _life <= 0;
+        /// <summary>
+        /// 是否活跃
+        /// </summary>
+        public bool IsActive => _life > 0;
+        /// <summary>
+        /// 点集数组
+        /// </summary>
         private readonly Vector2[] _points;
+        /// <summary>
+        /// 分支列表
+        /// </summary>
         private readonly List<List<Vector2>> _branches = [];
+        /// <summary>
+        /// 最大持续时间
+        /// </summary>
         private readonly int _maxLife;
-        private int _life;
+        /// <summary>
+        /// 厚度
+        /// </summary>
         private readonly float _thickness;
+        /// <summary>
+        /// 颜色
+        /// </summary>
         private readonly Color _color;
+        /// <summary>
+        /// 闪烁偏移量
+        /// </summary>
         private readonly float _flickerOffset;
+        /// <summary>
+        /// 持续时间
+        /// </summary>
+        private int _life;
+        /// <summary>
+        /// 生成闪电路径
+        /// </summary>
+        /// <param name="start">开始位置</param>
+        /// <param name="end">结束位置</param>
+        /// <param name="roughness">粗糙度</param>
+        /// <param name="segments">段数</param>
+        /// <param name="seed">种子</param>
+        /// <returns>路径位置列表</returns>
         private static List<Vector2> GenerateLightningPath(Vector2 start, Vector2 end, float roughness, int segments, int seed)
         {
             List<Vector2> points = [start];
@@ -68,7 +122,14 @@
             points.Add(end);
             return points;
         }
-        private static void DrawLightningLine(SpriteBatch sb, IReadOnlyList<Vector2> points, Color color, float thickness)
+        /// <summary>
+        /// 绘制闪电线段
+        /// </summary>
+        /// <param name="spriteBatch"></param>
+        /// <param name="points">点集位置列表</param>
+        /// <param name="color">颜色</param>
+        /// <param name="thickness">厚度</param>
+        private static void DrawLightningLine(SpriteBatch spriteBatch, IReadOnlyList<Vector2> points, Color color, float thickness)
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             for (int i = 0; i < points.Count - 1; i++)
@@ -77,13 +138,20 @@
                 Vector2 end = points[i + 1];
                 Vector2 diff = end - start;
                 float length = diff.Length();
-                sb.Draw(pixel, start, new Rectangle(0, 0, 1, 1), color,
+                spriteBatch.Draw(pixel, start, new Rectangle(0, 0, 1, 1), color,
                     MathF.Atan2(diff.Y, diff.X),
                     Vector2.Zero,
                     new Vector2(length, thickness),
                     SpriteEffects.None, 0);
             }
         }
+        /// <summary>
+        /// 构造方法，用于创建闪电实例
+        /// </summary>
+        /// <param name="center">环绕中心位置</param>
+        /// <param name="radius">覆盖半径大小</param>
+        /// <param name="angle">偏移角度</param>
+        /// <param name="heightFactor">高度系数</param>
         public LightningBolt(Vector2 center, float radius, float angle, float heightFactor)
         {
             _maxLife = Main.rand.Next(8, 15);
@@ -119,8 +187,15 @@
                 }
             }
         }
+        /// <summary>
+        /// 更新
+        /// </summary>
         public void Update() => _life--;
-        public void Draw(SpriteBatch sb)
+        /// <summary>
+        /// 绘制
+        /// </summary>
+        /// <param name="spriteBatch"></param>
+        public void Draw(SpriteBatch spriteBatch)
         {
             if (_life <= 0)
             {
@@ -128,13 +203,13 @@
             }
             float lifeRatio = (float)_life / _maxLife;
             float alpha = lifeRatio * (0.7f + 0.3f * MathF.Sin(Main.GameUpdateCount * 0.5f + _flickerOffset));
-            DrawLightningLine(sb, _points, _color * (alpha * 0.3f), _thickness * 3.0f);
-            DrawLightningLine(sb, _points, _color * (alpha * 0.7f), _thickness * 1.5f);
-            DrawLightningLine(sb, _points, Color.White * alpha, _thickness * 0.6f);
+            DrawLightningLine(spriteBatch, _points, _color * (alpha * 0.3f), _thickness * 3.0f);
+            DrawLightningLine(spriteBatch, _points, _color * (alpha * 0.7f), _thickness * 1.5f);
+            DrawLightningLine(spriteBatch, _points, Color.White * alpha, _thickness * 0.6f);
             foreach (List<Vector2> branch in _branches)
             {
-                DrawLightningLine(sb, branch, _color * (alpha * 0.5f), _thickness * 1.5f);
-                DrawLightningLine(sb, branch, Color.White * (alpha * 0.8f), _thickness * 0.5f);
+                DrawLightningLine(spriteBatch, branch, _color * (alpha * 0.5f), _thickness * 1.5f);
+                DrawLightningLine(spriteBatch, branch, Color.White * (alpha * 0.8f), _thickness * 0.5f);
             }
         }
     }

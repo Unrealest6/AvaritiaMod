@@ -364,7 +364,25 @@
         {
             if (Main.netMode != NetmodeID.Server)
             {
-                target.StrikeInstantKill();
+                if (Main.netMode == NetmodeID.SinglePlayer)
+                {
+                    target.NPCLoot();
+                }
+                if (target.HitSound != null)
+                {
+                    SoundEngine.PlaySound(target.HitSound, target.position);
+                }
+                target.life = 0;
+                target.HitEffect(0, 0, true);
+                SoundStyle? legacySoundStyle = target.DeathSound;
+                if (target is { type: NPCID.Pirate, IsShimmerVariant: true })
+                {
+                    legacySoundStyle = SoundID.NPCDeath6;
+                }
+                if (legacySoundStyle != null)
+                {
+                    SoundEngine.PlaySound(legacySoundStyle, target.position);
+                }
                 if (Main.netMode == NetmodeID.MultiplayerClient && Projectile.owner == Main.myPlayer)
                 {
                     ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();

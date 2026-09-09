@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common.AvaritiaUtils
 {
+    /// <summary>
+    /// 无尽贪婪UI工具
+    /// </summary>
     public static class AvaritiaUIUtils
     {
         /// <summary>
@@ -54,7 +57,7 @@
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
         /// <summary>
-        /// 绘制单个物品槽位（背景 + 图标 + 数量）。
+        /// 绘制单个物品槽位（背景，图标，数量）
         /// </summary>
         public static void DrawItemSlot(SpriteBatch spriteBatch, Item item, Vector2 position, Texture2D bgTexture, Color bgColor = default, Color itemColor = default, float scale = 1f)
         {

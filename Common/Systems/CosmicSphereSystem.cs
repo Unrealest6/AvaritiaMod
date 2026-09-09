@@ -133,7 +133,7 @@
             Vector2 screenPos = player.Center - Main.screenPosition;
             SpriteBatch spriteBatch = Main.spriteBatch;
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
-            modPlayer.CosmicParticles?.UpdateAndDraw(spriteBatch, screenPos, SphereRadius, Main.GameUpdateCount);
+            modPlayer.CosmicParticles?.UpdateAndDrawAll(spriteBatch, screenPos, SphereRadius);
             spriteBatch.End();
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
             Texture2D texture = ModContent.Request<Texture2D>("AvaritiaMod/Assets/Textures/Halo", AssetRequestMode.ImmediateLoad).Value;
@@ -147,7 +147,7 @@
             }
             spriteBatch.End();
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
-            modPlayer.SphereLightning?.UpdateAndDraw(spriteBatch, screenPos, SphereRadius);
+            modPlayer.SphereLightning?.UpdateAndDrawAll(spriteBatch, screenPos, SphereRadius);
             spriteBatch.End();
         }
         private void DrawSphere(Player player, float alpha = 1f)

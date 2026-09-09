@@ -389,7 +389,21 @@ namespace AvaritiaMod
             {
                 return;
             }
-            npc.StrikeInstantKill();
+            if (npc.HitSound != null)
+            {
+                SoundEngine.PlaySound(npc.HitSound, npc.position);
+            }
+            npc.life = 0;
+            npc.HitEffect(0, 0, true);
+            SoundStyle? legacySoundStyle = npc.DeathSound;
+            if (npc is { type: NPCID.Pirate, IsShimmerVariant: true })
+            {
+                legacySoundStyle = SoundID.NPCDeath6;
+            }
+            if (legacySoundStyle != null)
+            {
+                SoundEngine.PlaySound(legacySoundStyle, npc.position);
+            }
         }
         private void HandleBroadcastHurtPlayer(BinaryReader reader)
         {

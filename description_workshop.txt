@@ -15,8 +15,8 @@ Translations: Unrealistically
 Testing: Unrealistically
 
 [h2] -=Related Information=- [/h2]
-Homepage = [url=store.steampowered.com] https://space.bilibili.com/1108947907 [/url]
-Github: 
+Homepage: [url=https://space.bilibili.com/1108947907]bilibili[/url]
+Github: [url=https://github.com/Unrealest6/AvaritiaMod]GitHub[/url]
 
 Avaritia Terraria Mod 是泰拉瑞亚一款面向终局内容的附属模组，
 灵感源自知名我的世界模组无尽贪婪(Avaritia)。
@@ -34,5 +34,5 @@ Avaritia Terraria Mod 是泰拉瑞亚一款面向终局内容的附属模组，
 技术支持：洛谔谔，yiyang233，Star_KZ，DeepSeek，Kimi
 
 [h2] -=相关信息=- [/h2]
-模组主页：[url=store.steampowered.com] https://space.bilibili.com/1108947907 [/url]
-Github：[url=store.steampowered.com] https://github.com/Unrealest6/AvaritiaMod [/url]
+模组主页：[url=https://space.bilibili.com/1108947907]bilibili[/url]
+Github：[url=https://github.com/Unrealest6/AvaritiaMod]GitHub[/url]

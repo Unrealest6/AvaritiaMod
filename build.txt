@@ -1,6 +1,6 @@
 ﻿displayName = Avaritia/无尽贪婪
 author = Unrealistically, WP
-version = 0.2
+version = 0.3
 modReferences = EternalLib
 includeSource = true
 homepage = https://space.bilibili.com/1108947907
