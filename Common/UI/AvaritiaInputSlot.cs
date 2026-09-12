@@ -66,12 +66,14 @@
                 {
                     Main.LocalPlayer.trashItem = Item.Clone();
                     Item.TurnToAir();
+                    OnItemChanged();
                     SoundEngine.PlaySound(SoundID.Grab);
                 }
                 else
                 {
                     Main.mouseItem = Item.Clone();
                     Item.TurnToAir();
+                    OnItemChanged();
                     SoundEngine.PlaySound(SoundID.Grab);
                 }
                 return;
@@ -79,6 +81,7 @@
             if (Item.IsAir)
             {
                 Item = Main.mouseItem.Clone();
+                OnItemChanged();
                 Main.mouseItem.TurnToAir();
                 SoundEngine.PlaySound(SoundID.Grab);
                 return;
@@ -103,6 +106,7 @@
                     Item.stack = Item.maxStack;
                     SoundEngine.PlaySound(SoundID.MenuTick);
                 }
+                OnItemChanged();
                 return;
             }
             SwapWithMouse();
@@ -123,12 +127,14 @@
                 {
                     Item.TurnToAir();
                 }
+                OnItemChanged();
                 SoundEngine.PlaySound(SoundID.MenuTick);
                 return;
             }
             if (Item.IsAir)
             {
                 Item = new Item(Main.mouseItem.type);
+                OnItemChanged();
                 if (--Main.mouseItem.stack <= 0)
                 {
                     Main.mouseItem.TurnToAir();
@@ -139,11 +145,11 @@
             if (Item.type == Main.mouseItem.type && Item.stack < Item.maxStack)
             {
                 Item.stack++;
+                OnItemChanged();
                 if (--Main.mouseItem.stack <= 0)
                 {
                     Main.mouseItem.TurnToAir();
                 }
-
                 SoundEngine.PlaySound(SoundID.MenuTick);
                 return;
             }

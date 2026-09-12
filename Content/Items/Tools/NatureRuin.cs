@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-
-namespace AvaritiaMod.Content.Items.Tools
+﻿namespace AvaritiaMod.Content.Items.Tools
 {
     public sealed class NatureRuin : ModItem
     {
@@ -27,11 +25,9 @@ namespace AvaritiaMod.Content.Items.Tools
         {
             foreach (TooltipLine line in tooltips.Where(line => line.Mod == "Terraria"))
             {
-                switch (line.Name)
+                if (line.Name == "AxePower")
                 {
-                    case "AxePower":
-                        line.Hide();
-                        break;
+                    line.Hide();
                 }
             }
         }

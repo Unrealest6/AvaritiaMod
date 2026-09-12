@@ -2,8 +2,17 @@
 {
     public sealed class AvaritiaFrameSystem : ModSystem
     {
+        /// <summary>
+        /// 光环噪声序列图纹理实例
+        /// </summary>
         public static FrameTexture? HaloNoise { get; private set; }
+        /// <summary>
+        /// 十个星星的序列图纹理实例
+        /// </summary>
         public static FrameTexture?[] CosmicTextures { get; private set; } = new FrameTexture[10];
+        /// <summary>
+        /// 在SetupContent方法中对纹理进行加载以保证客户端生效
+        /// </summary>
         public override void SetupContent()
         {
             HaloNoise = FrameTextureSystem.Register("HaloNoise", "AvaritiaMod/Assets/Textures/HaloNoise", 8, 3);

@@ -115,7 +115,6 @@
             writer.Write(IsWorking);
             writer.Write(_processTimer);
         }
-
         public override void NetReceive(BinaryReader reader)
         {
             InputItem = ItemIO.Receive(reader, readStack: true, readFavorite: true);

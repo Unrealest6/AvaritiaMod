@@ -1,36 +1,42 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
-    public sealed class NeutronCollectorUI : DragUIState<NeutronCollectorUI, UIPanel>
+    public sealed class NeutronCollectorUI : DragUIState<UIPanel>
     {
-        internal static bool Visible { get; set; }
         private UIText? _title;
         private UIText? _processText;
         private UITextPanel<string>? _closeButton;
         public NeutronCollectorOutputSlot? OutputSlot { get; private set; }
         public NeutronCollectorTileEntity TileEntity { get; }
-        public NeutronCollectorUI(NeutronCollectorTileEntity tileEntity) => TileEntity = tileEntity;
+        public NeutronCollectorUI(NeutronCollectorTileEntity tileEntity)
+        {
+            TileEntity = tileEntity;
+            Element = new UIPanel();
+        }
         public override void OnInitialize()
         {
-            panel = new UIPanel();
-            panel.SetPadding(5);
-            panel.Width.Set(320, 0);
-            panel.Height.Set(200, 0);
-            panel.HAlign = 0.2f;
-            panel.VAlign = 0.4f;
-            panel.BackgroundColor = new Color(63, 82, 151) * 0.8f;
-            Append(panel);
+            if (Element is null)
+            {
+                return;
+            }
+            Element.SetPadding(5);
+            Element.Width.Set(320, 0);
+            Element.Height.Set(200, 0);
+            Element.HAlign = 0.2f;
+            Element.VAlign = 0.4f;
+            Element.BackgroundColor = new Color(63, 82, 151) * 0.8f;
+            Append(Element);
             _title = new UIText(ModContent.GetModItem(ModContent.ItemType<NeutronCollector>()).DisplayName.Value)
             {
                 HAlign = 0.5f
             };
             _title.Top.Set(-30, 0);
-            panel.Append(_title);
+            Element.Append(_title);
             _processText = new UIText("Process: ")
             {
                 HAlign = 0.5f,
                 VAlign = 0.85f
             };
-            panel.Append(_processText);
+            Element.Append(_processText);
             _closeButton = new UITextPanel<string>(Language.GetTextValue("LegacyMisc.56"));
             _closeButton.Width.Set(100, 0);
             _closeButton.Height.Set(40, 0);
@@ -42,23 +48,31 @@
                 ModContent.GetInstance<NeutronCollectorUISystem>().HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
             };
-            panel.Append(_closeButton);
+            Element.Append(_closeButton);
             OutputSlot = new NeutronCollectorOutputSlot();
             OutputSlot.Width.Set(78, 0);
             OutputSlot.Height.Set(78, 0);
             OutputSlot.Top.Set(0, 0.3f);
             OutputSlot.Left.Set(0, 0.38f);
-            panel.Append(OutputSlot);
+            Element.Append(OutputSlot);
         }
         public override void OnActivate()
         {
-            panel.Left = TileEntity.Styles[0];
-            panel.Top = TileEntity.Styles[1];
+            if (Element is null)
+            {
+                return;
+            }
+            Element.Left = TileEntity.Styles[0];
+            Element.Top = TileEntity.Styles[1];
         }
         public override void OnDeactivate()
         {
-            TileEntity.Styles[0] = panel.Left;
-            TileEntity.Styles[1] = panel.Top;
+            if (Element is null)
+            {
+                return;
+            }
+            TileEntity.Styles[0] = Element.Left;
+            TileEntity.Styles[1] = Element.Top;
         }
         public override void Update(GameTime gameTime)
         {

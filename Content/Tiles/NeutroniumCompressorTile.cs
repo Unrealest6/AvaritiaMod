@@ -42,22 +42,23 @@
         }
         public override bool RightClick(int i, int j)
         {
-            if (!TileEntity.TryGet(i, j, out NeutroniumCompressorTileEntity myTileEntity))
+            if (!TileEntity.TryGet(i, j, out NeutroniumCompressorTileEntity tileEntity))
             {
                 return true;
             }
-            if (!NeutroniumCompressorUI.Visible)
+            NeutroniumCompressorUISystem system = ModContent.GetInstance<NeutroniumCompressorUISystem>();
+            if (!tileEntity.NeutroniumCompressorUI?.Visible ?? true)
             {
-                ModContent.GetInstance<NeutroniumCompressorUISystem>().ShowMyUI(myTileEntity);
+                system.ShowUI(tileEntity);
                 Main.playerInventory = true;
                 SoundEngine.PlaySound(SoundID.MenuOpen);
-                NeutroniumCompressorUI.Visible = true;
+                tileEntity.NeutroniumCompressorUI?.Visible = true;
             }
             else
             {
-                ModContent.GetInstance<NeutroniumCompressorUISystem>().HideUI();
+                system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                NeutroniumCompressorUI.Visible = false;
+                tileEntity.NeutroniumCompressorUI?.Visible = false;
             }
             return true;
         }
@@ -79,13 +80,13 @@
             {
                 return;
             }
-            NeutroniumCompressorUISystem uiSystem = ModContent.GetInstance<NeutroniumCompressorUISystem>();
-            uiSystem.CurrentUI?.OnDeactivate();
-            if (uiSystem.IsTileCurrent(i, j))
+            NeutroniumCompressorUISystem system = ModContent.GetInstance<NeutroniumCompressorUISystem>();
+            NeutroniumCompressorUISystem.CurrentUI?.OnDeactivate();
+            if (system.IsTileCurrent(i, j))
             {
-                uiSystem.HideUI();
+                system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                NeutroniumCompressorUI.Visible = false;
+                NeutroniumCompressorUISystem.CurrentUI?.Visible = false;
             }
             if (!TileEntity.TryGet(i, j, out NeutroniumCompressorTileEntity entity))
             {

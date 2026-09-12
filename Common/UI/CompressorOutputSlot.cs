@@ -12,6 +12,10 @@
             {
                 NeutroniumCompressorTileEntity.SendOutputChange(parent.TileEntity.Position, Item.Clone());
             }
+            else if (Main.netMode == NetmodeID.SinglePlayer)
+            {
+                parent.TileEntity.OutputItem = Item.Clone();
+            }
         }
         public override void Update(GameTime gameTime)
         {

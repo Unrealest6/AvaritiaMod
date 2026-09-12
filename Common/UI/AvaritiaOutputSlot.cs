@@ -4,38 +4,6 @@
     {
         public Item Item { get; set; } = new();
         protected Item OldItem { get; set; }
-        private static bool TryGiveToMouseOrInventory(Item item, bool shift)
-        {
-            if (item.IsAir)
-            {
-                return false;
-            }
-            if (shift)
-            {
-                AvaritiaUIUtils.MoveItemToPlayerInventory(item);
-                return item.IsAir;
-            }
-            if (Main.mouseItem.IsAir)
-            {
-                Main.mouseItem = item.Clone();
-                item.TurnToAir();
-                return true;
-            }
-            if (Main.mouseItem.type != item.type || Main.mouseItem.maxStack != item.maxStack)
-            {
-                return false;
-            }
-            int space = Main.mouseItem.maxStack - Main.mouseItem.stack;
-            if (space >= item.stack)
-            {
-                Main.mouseItem.stack += item.stack;
-                item.TurnToAir();
-                return true;
-            }
-            item.stack -= space;
-            Main.mouseItem.stack = item.maxStack;
-            return false;
-        }
         protected AvaritiaOutputSlot()
         {
             OldItem = Item.Clone();
@@ -95,6 +63,41 @@
         {
             base.RightClick(evt);
             MouseClick(evt);
+        }
+        private bool TryGiveToMouseOrInventory(Item item, bool shift)
+        {
+            if (item.IsAir)
+            {
+                return false;
+            }
+            if (shift)
+            {
+                AvaritiaUIUtils.MoveItemToPlayerInventory(item);
+                return item.IsAir;
+            }
+            if (Main.mouseItem.IsAir)
+            {
+                Main.mouseItem = item.Clone();
+                item.TurnToAir();
+                OnItemChanged();
+                return true;
+            }
+            if (Main.mouseItem.type != item.type || Main.mouseItem.maxStack != item.maxStack)
+            {
+                return false;
+            }
+            int space = Main.mouseItem.maxStack - Main.mouseItem.stack;
+            if (space >= item.stack)
+            {
+                Main.mouseItem.stack += item.stack;
+                item.TurnToAir();
+                OnItemChanged();
+                return true;
+            }
+            item.stack -= space;
+            OnItemChanged();
+            Main.mouseItem.stack = item.maxStack;
+            return false;
         }
     }
 }

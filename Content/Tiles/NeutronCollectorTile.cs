@@ -42,22 +42,23 @@
         }
         public override bool RightClick(int i, int j)
         {
-            if (!TileEntity.TryGet(i, j, out NeutronCollectorTileEntity myTileEntity))
+            if (!TileEntity.TryGet(i, j, out NeutronCollectorTileEntity tileEntity))
             {
                 return true;
             }
-            if (!NeutronCollectorUI.Visible)
+            NeutronCollectorUISystem system = ModContent.GetInstance<NeutronCollectorUISystem>();
+            if (!tileEntity.NeutronCollectorUI?.Visible ?? true)
             {
-                ModContent.GetInstance<NeutronCollectorUISystem>().ShowMyUI(myTileEntity);
+                system.ShowUI(tileEntity);
                 Main.playerInventory = true;
                 SoundEngine.PlaySound(SoundID.MenuOpen);
-                NeutronCollectorUI.Visible = true;
+                tileEntity.NeutronCollectorUI?.Visible = true;
             }
             else
             {
-                ModContent.GetInstance<NeutronCollectorUISystem>().HideUI();
+                system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                NeutronCollectorUI.Visible = false;
+                tileEntity.NeutronCollectorUI?.Visible = false;
             }
             return true;
         }
@@ -79,13 +80,13 @@
             {
                 return;
             }
-            NeutronCollectorUISystem uiSystem = ModContent.GetInstance<NeutronCollectorUISystem>();
-            uiSystem.CurrentUI?.OnDeactivate();
-            if (uiSystem.IsTileCurrent(i, j))
+            NeutronCollectorUISystem system = ModContent.GetInstance<NeutronCollectorUISystem>();
+            NeutronCollectorUISystem.CurrentUI?.OnDeactivate();
+            if (system.IsTileCurrent(i, j))
             {
-                uiSystem.HideUI();
+                system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                NeutronCollectorUI.Visible = false;
+                NeutronCollectorUISystem.CurrentUI?.Visible = false;
             }
             if (!TileEntity.TryGet(i, j, out NeutronCollectorTileEntity entity))
             {

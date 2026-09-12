@@ -4,6 +4,7 @@
     {
         public override bool CanKillTile(int i, int j, int type, ref bool blockDamaged)
         {
+            //处理世界崩解之镐普通模式的挖掘逻辑
             if (Main.LocalPlayer.HeldItem.ModItem is WorldBreaker { Mode: 0 } && Main.LocalPlayer.controlUseItem
                 && Main.LocalPlayer.IsInTileInteractionRange(i, j, TileReachCheckSettings.Simple) && !Main.tileAxe[Main.tile[i, j].TileType])
             {
@@ -60,6 +61,7 @@
                 }
                 return true;
             }
+            //处理星球吞噬之铲普通模式的挖掘逻辑
             if (Main.LocalPlayer.HeldItem.ModItem is PlanetEater { Mode: 0 } && Main.LocalPlayer.controlUseItem && Main.LocalPlayer.IsInTileInteractionRange(i, j, TileReachCheckSettings.Simple)
                 && Framing.GetTileSafely(i, j).HasTile && TileID.Sets.CanBeDugByShovel[Framing.GetTileSafely(i, j).TileType] || Main.LocalPlayer.HeldItem.ModItem is NatureRuin &&
                 Main.LocalPlayer.controlUseItem &&

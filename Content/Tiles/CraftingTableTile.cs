@@ -43,33 +43,33 @@
         }
         public override bool RightClick(int i, int j)
         {
-            if (!TileEntity.TryGet(i, j, out CraftingTableTileEntity entity))
+            if (!TileEntity.TryGet(i, j, out CraftingTableTileEntity tileEntity))
             {
                 return false;
             }
             if (Item?.ModItem is CraftingTableItem { Items: not null } craftItem)
             {
-                for (int x = 0; x < entity.Size; x++)
+                for (int x = 0; x < tileEntity.Size; x++)
                 {
-                    for (int y = 0; y < entity.Size; y++)
+                    for (int y = 0; y < tileEntity.Size; y++)
                     {
-                        entity.Items?[x, y] = craftItem.Items[x, y].Clone();
+                        tileEntity.Items?[x, y] = craftItem.Items[x, y].Clone();
                     }
                 }
             }
             CraftingTableUISystem system = ModContent.GetInstance<CraftingTableUISystem>();
-            if (!CraftingTableUI.Visible)
+            if (!tileEntity.CraftingTableUI?.Visible ?? true)
             {
-                system.ShowMyUI<TUI>(entity);
+                system.ShowUI<TUI>(tileEntity);
                 Main.playerInventory = true;
                 SoundEngine.PlaySound(SoundID.MenuOpen);
-                CraftingTableUI.Visible = true;
+                tileEntity.CraftingTableUI?.Visible = true;
             }
             else
             {
                 system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                CraftingTableUI.Visible = false;
+                tileEntity.CraftingTableUI?.Visible = false;
             }
             return true;
         }
@@ -92,12 +92,12 @@
                 return;
             }
             CraftingTableUISystem system = ModContent.GetInstance<CraftingTableUISystem>();
-            system.CurrentUI?.OnDeactivate();
+            CraftingTableUISystem.CurrentUI?.OnDeactivate();
             if (system.IsTileCurrent(i, j))
             {
                 system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                CraftingTableUI.Visible = false;
+                CraftingTableUISystem.CurrentUI?.Visible = false;
             }
             if (!TileEntity.TryGet(i, j, out CraftingTableTileEntity entity))
             {

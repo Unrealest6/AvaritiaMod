@@ -19,7 +19,12 @@
         }
         public override void UpdateArmorSet(Player player)
         {
+            if (player.statLife < 25)
+            {
+                player.statLife = player.statLifeMax2;
+            }
             player.statDefense += 960;
+            player.lifeRegen += 50;
             foreach (Projectile projectile in Main.ActiveProjectiles)
             {
                 if (!projectile.hostile && projectile.friendly ||

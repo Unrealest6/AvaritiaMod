@@ -2,23 +2,42 @@
 {
     public sealed class CosmicSphereSystem : ModSystem
     {
-        internal const float SphereRadius = 384f;
-        private static Effect? BlackHoleEffect { get; set; }
-        private static Effect? SphereEffect { get; set; }
-        private static VertexBuffer? vertexBuffer;
-        private static IndexBuffer? indexBuffer;
-        private static int indexCount;
+        /// <summary>
+        /// 球体半径常量
+        /// </summary>
+        public const float SphereRadius = 384f;
+        /// <summary>
+        /// 黑洞着色器实例
+        /// </summary>
+        public static Effect? BlackHoleEffect { get; private set; }
+        /// <summary>
+        /// 宇宙球体着色器实例
+        /// </summary>
+        public static Effect? CosmicSphereEffect { get; private set; }
+        /// <summary>
+        /// 顶点缓冲区实例
+        /// </summary>
+        private static VertexBuffer? _vertexBuffer;
+        /// <summary>
+        /// 索引缓冲区实例
+        /// </summary>
+        private static IndexBuffer? _indexBuffer;
+        /// <summary>
+        /// 索引数量
+        /// </summary>
+        private static int _indexCount;
         public override void Load()
         {
             if (Main.dedServ)
             {
                 return;
             }
-            SphereEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/CosmicShader3D", AssetRequestMode.ImmediateLoad).Value;
+            //加载两个着色器以及初始化顶点和索引
+            CosmicSphereEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/CosmicShader3D", AssetRequestMode.ImmediateLoad).Value;
             BlackHoleEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/BlackHole", AssetRequestMode.ImmediateLoad).Value;
             SphereVertex[] vertices = SphereMeshGenerator.GenerateSphere(32, 32, SphereRadius);
             int[] indices = SphereMeshGenerator.GenerateSphereIndices(32, 32);
-            indexCount = indices.Length;
+            _indexCount = indices.Length;
             Main.QueueMainThreadAction(() =>
             {
                 GraphicsDevice? device = Main.graphics.GraphicsDevice;
@@ -26,37 +45,38 @@
                 {
                     return;
                 }
-                vertexBuffer = new VertexBuffer(device, SphereVertex.VertexDeclaration, vertices.Length, BufferUsage.WriteOnly);
-                vertexBuffer.SetData(vertices);
-                indexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
-                indexBuffer.SetData(indices);
+                _vertexBuffer = new VertexBuffer(device, SphereVertex.VertexDeclaration, vertices.Length, BufferUsage.WriteOnly);
+                _vertexBuffer.SetData(vertices);
+                _indexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
+                _indexBuffer.SetData(indices);
             });
+            //使用该hook以实现后处理绘制的效果
             On_FilterManager.EndCapture += OnFilterManagerEndCapture;
         }
         public override void Unload()
         {
+            //释放资源
             On_FilterManager.EndCapture -= OnFilterManagerEndCapture;
             Main.QueueMainThreadAction(() =>
             {
-                vertexBuffer?.Dispose();
-                indexBuffer?.Dispose();
-                vertexBuffer = null;
-                indexBuffer = null;
+                _vertexBuffer?.Dispose();
+                _indexBuffer?.Dispose();
+                _vertexBuffer = null;
+                _indexBuffer = null;
             });
         }
         private void OnFilterManagerEndCapture(On_FilterManager.orig_EndCapture orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Color clearColor)
         {
+            //前处理绘制宇宙球体效果
             foreach (Player player in Main.player)
             {
-                if (player.active && !player.dead && player.TryGetModPlayer(out AvaritiaPlayer modPlayer))
+                if (player.active && !player.dead && player.TryGetModPlayer(out AvaritiaPlayer modPlayer) && modPlayer.CosmicSphereActive)
                 {
-                    if (modPlayer.CosmicSphereActive)
-                    {
-                        DrawSphereForPlayer(player, modPlayer);
-                    }
+                    DrawCosmicSphere(player, modPlayer);
                 }
             }
             orig(self, finalTexture, screenTarget1, screenTarget2, clearColor);
+            //后处理绘制黑洞衔接动画
             if (Main.LocalPlayer.TryGetModPlayer(out AvaritiaPlayer localPlayer) && localPlayer.CosmicSphereSuit)
             {
                 SpriteBatch spriteBatch = Main.spriteBatch;
@@ -117,19 +137,20 @@
                     Color.White, 0, Vector2.Zero, 1f / zoom, SpriteEffects.None, 0);
                 spriteBatch.End();
             }
-            else
-            {
-                orig(self, finalTexture, screenTarget1, screenTarget2, clearColor);
-            }
         }
-        private void DrawSphereForPlayer(Player player, AvaritiaPlayer modPlayer)
+        /// <summary>
+        /// 绘制宇宙球体
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="modPlayer">ModPlayer实例</param>
+        private void DrawCosmicSphere(Player player, AvaritiaPlayer modPlayer)
         {
             if (modPlayer.CosmicSphereTimer < 300)
             {
                 return;
             }
             float alpha = (modPlayer.CosmicSphereTimer - 300) / 240f;
-            DrawSphere(player, alpha);
+            DrawCosmicSphere(player, alpha);
             Vector2 screenPos = player.Center - Main.screenPosition;
             SpriteBatch spriteBatch = Main.spriteBatch;
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
@@ -147,12 +168,17 @@
             }
             spriteBatch.End();
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
-            modPlayer.SphereLightning?.UpdateAndDrawAll(spriteBatch, screenPos, SphereRadius);
+            modPlayer.CosmicLightning?.UpdateAndDrawAll(spriteBatch, screenPos, SphereRadius);
             spriteBatch.End();
         }
-        private void DrawSphere(Player player, float alpha = 1f)
+        /// <summary>
+        /// 绘制宇宙球体
+        /// </summary>
+        /// <param name="player">玩家实例</param>
+        /// <param name="alpha">透明度</param>
+        private void DrawCosmicSphere(Player player, float alpha = 1f)
         {
-            if (vertexBuffer == null || indexBuffer == null)
+            if (_vertexBuffer == null || _indexBuffer == null)
             {
                 return;
             }
@@ -160,7 +186,7 @@
             {
                 return;
             }
-            Effect? effect = SphereEffect;
+            Effect? effect = CosmicSphereEffect;
             if (effect?.IsDisposed != false)
             {
                 return;
@@ -200,10 +226,10 @@
             };
             device.DepthStencilState = DepthStencilState.None;
             device.RasterizerState = RasterizerState.CullCounterClockwise;
-            device.SetVertexBuffer(vertexBuffer);
-            device.Indices = indexBuffer;
+            device.SetVertexBuffer(_vertexBuffer);
+            device.Indices = _indexBuffer;
             effect.CurrentTechnique.Passes[0].Apply();
-            device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, vertexBuffer.VertexCount, 0, indexCount / 3);
+            device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, _vertexBuffer.VertexCount, 0, _indexCount / 3);
             device.SetVertexBuffer(null);
             device.Indices = null;
             device.BlendState = oldBlend;
