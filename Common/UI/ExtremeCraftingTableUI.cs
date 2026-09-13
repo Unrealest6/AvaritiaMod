@@ -1,6 +1,4 @@
-﻿using AvaritiaMod;
-
-namespace AvaritiaMod.Common.UI
+﻿namespace AvaritiaMod.Common.UI
 {
     public sealed class ExtremeCraftingTableUI : CraftingTableUI
     {
@@ -19,7 +17,7 @@ namespace AvaritiaMod.Common.UI
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            Title?.SetText(Lang.GetItemNameValue(ModContent.ItemType<ExtremeCraftingTable>()).ApplyGradient("Rainbow"));
+            Title?.SetText(Lang.GetItemNameValue(ModContent.ItemType<ExtremeCraftingTable>()).ApplyGradient(ModContent.GetInstance<AvaritiaMod>().Name + "Rainbow"));
         }
     }
 }

@@ -1,7 +1,4 @@
-﻿using AvaritiaMod;
-using AvaritiaMod.Content.Items;
-
-namespace AvaritiaMod.Content.Items.Weapons
+﻿namespace AvaritiaMod.Content.Items.Weapons
 {
     public sealed class SwordOfTheCosmos : ModItem
     {
@@ -64,7 +61,7 @@ namespace AvaritiaMod.Content.Items.Weapons
                 switch (line.Name)
                 {
                     case "Damage":
-                        line.Text = Lang.GetTooltip(Type).GetLine(0).ApplyGradient("Rainbow") + Item.DamageType.DisplayName.Value;
+                        line.Text = Lang.GetTooltip(Type).GetLine(0).ApplyGradient(Mod.Name + "Rainbow") + Item.DamageType.DisplayName.Value;
                         break;
                     case "CritChance" or "Tooltip0":
                         line.Hide();

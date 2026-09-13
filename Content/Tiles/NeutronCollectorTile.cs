@@ -47,18 +47,18 @@
                 return true;
             }
             NeutronCollectorUISystem system = ModContent.GetInstance<NeutronCollectorUISystem>();
-            if (!tileEntity.NeutronCollectorUI?.Visible ?? true)
+            if (!NeutronCollectorUISystem.CurrentUI?.Visible ?? true)
             {
                 system.ShowUI(tileEntity);
                 Main.playerInventory = true;
                 SoundEngine.PlaySound(SoundID.MenuOpen);
-                tileEntity.NeutronCollectorUI?.Visible = true;
+                NeutronCollectorUISystem.CurrentUI?.Visible = true;
             }
             else
             {
                 system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                tileEntity.NeutronCollectorUI?.Visible = false;
+                NeutronCollectorUISystem.CurrentUI?.Visible = false;
             }
             return true;
         }

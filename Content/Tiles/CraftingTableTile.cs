@@ -58,18 +58,18 @@
                 }
             }
             CraftingTableUISystem system = ModContent.GetInstance<CraftingTableUISystem>();
-            if (!tileEntity.CraftingTableUI?.Visible ?? true)
+            if (!CraftingTableUISystem.CurrentUI?.Visible ?? true)
             {
                 system.ShowUI<TUI>(tileEntity);
                 Main.playerInventory = true;
                 SoundEngine.PlaySound(SoundID.MenuOpen);
-                tileEntity.CraftingTableUI?.Visible = true;
+                CraftingTableUISystem.CurrentUI?.Visible = true;
             }
             else
             {
                 system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                tileEntity.CraftingTableUI?.Visible = false;
+                CraftingTableUISystem.CurrentUI?.Visible = false;
             }
             return true;
         }

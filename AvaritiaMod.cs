@@ -81,7 +81,7 @@ namespace AvaritiaMod
         }
         public override void PostSetupContent()
         {
-            ColorGradient.Register("Rainbow",
+            ColorGradient.Register(Name + "Rainbow",
                 [
                     new Color(255, 85, 85),
                     new Color(255, 170, 0),
@@ -91,7 +91,7 @@ namespace AvaritiaMod
                     new Color(85, 85, 255),
                     new Color(255, 85, 255)
                 ], 80, GradientDirection.Right);
-            ColorGradient.Register("SANIC",
+            ColorGradient.Register(Name + "SANIC",
                 [
                     new Color(85, 85, 255),
                     new Color(85, 85, 255),

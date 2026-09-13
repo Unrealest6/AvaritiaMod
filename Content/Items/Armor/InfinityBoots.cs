@@ -14,7 +14,7 @@
             {
                 if (line.Name == "Tooltip0")
                 {
-                    line.Text = "+" + Lang.GetTooltip(Type).GetLine(0).ApplyGradient("SANIC") + "% Speed";
+                    line.Text = "+" + Lang.GetTooltip(Type).GetLine(0).ApplyGradient(Mod.Name + "SANIC") + "% Speed";
                 }
             }
         }

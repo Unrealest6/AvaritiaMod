@@ -61,6 +61,7 @@
                 if (ItemSlot.ShiftInUse)
                 {
                     AvaritiaUIUtils.MoveItemToPlayerInventory(Item);
+                    OnItemChanged();
                 }
                 else if (ItemSlot.ControlInUse)
                 {
@@ -89,6 +90,7 @@
             if (Main.keyState.IsKeyDown(Keys.LeftShift))
             {
                 AvaritiaUIUtils.MoveItemToPlayerInventory(Item);
+                OnItemChanged();
                 return;
             }
             if (Main.mouseItem.type == Item.type && Main.mouseItem.maxStack == Item.maxStack && Item.stack < Item.maxStack)
@@ -158,6 +160,7 @@
         private void SwapWithMouse()
         {
             (Main.mouseItem, Item) = (Item.Clone(), Main.mouseItem.Clone());
+            OnItemChanged();
             SoundEngine.PlaySound(SoundID.Grab);
         }
     }

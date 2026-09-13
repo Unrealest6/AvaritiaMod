@@ -6,8 +6,8 @@
         public static FrameTexture? Singularity2 { get; private set; }
         internal static Dictionary<int, Singularity> Singularities { get; set; } = [];
         public abstract int RequiredQuantity { get; }
-        protected abstract Color OverlayColor { get; }
-        protected abstract Color UnderlayColor { get; }
+        protected virtual Color OverlayColor => Color.White;
+        protected virtual Color UnderlayColor => OverlayColor - 64;
         protected abstract int RequiredItemType { get; }
         protected internal virtual bool AddInfinityCatalystRecipe => true;
         public sealed override string Texture => "AvaritiaMod/Content/Items/Singularity2";

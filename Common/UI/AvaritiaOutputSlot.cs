@@ -73,6 +73,7 @@
             if (shift)
             {
                 AvaritiaUIUtils.MoveItemToPlayerInventory(item);
+                OnItemChanged();
                 return item.IsAir;
             }
             if (Main.mouseItem.IsAir)

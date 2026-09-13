@@ -47,18 +47,18 @@
                 return true;
             }
             NeutroniumCompressorUISystem system = ModContent.GetInstance<NeutroniumCompressorUISystem>();
-            if (!tileEntity.NeutroniumCompressorUI?.Visible ?? true)
+            if (!NeutroniumCompressorUISystem.CurrentUI?.Visible ?? true)
             {
                 system.ShowUI(tileEntity);
                 Main.playerInventory = true;
                 SoundEngine.PlaySound(SoundID.MenuOpen);
-                tileEntity.NeutroniumCompressorUI?.Visible = true;
+                NeutroniumCompressorUISystem.CurrentUI?.Visible = true;
             }
             else
             {
                 system.HideUI();
                 SoundEngine.PlaySound(SoundID.MenuClose);
-                tileEntity.NeutroniumCompressorUI?.Visible = false;
+                NeutroniumCompressorUISystem.CurrentUI?.Visible = false;
             }
             return true;
         }
