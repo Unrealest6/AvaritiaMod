@@ -9,6 +9,10 @@
         private static readonly int[] PrepareTimes = [8, 6, 6];
         private static readonly int[] SwingTimes = [8, 8, 14];
         private static readonly int[] UnwindTimes = [10, 10, 12];
+        /// <summary>
+        /// 星空RT
+        /// </summary>
+        private static RenderTarget2D? _cosmicRT;
         private Vector2 _drawVector2;
         private Vector2 _lastEndVector2;
         private Vector2[]? _trailVector2s;
@@ -77,6 +81,43 @@
             float tiltZ = -y0 * float.Sin(tilt);
             float k = -viewZ / (tiltZ - viewZ);
             return new Vector2(k * (x0 * cosR + tiltY * sinR), k * (-x0 * sinR + tiltY * cosR));
+        }
+        public static void RenderCosmicRT(float cosmicRadius)
+        {
+            GraphicsDevice gd = Main.graphics.GraphicsDevice;
+            float zoom = Main.GameViewMatrix.ZoomMatrix.M11;
+            int rtSize = (int)(cosmicRadius * 2 * zoom);
+            rtSize = (int)MathHelper.Clamp(rtSize, 128, 2048);
+            if (_cosmicRT == null || _cosmicRT.Width != rtSize || _cosmicRT.Height != rtSize)
+            {
+                _cosmicRT?.Dispose();
+                _cosmicRT = new RenderTarget2D(gd, rtSize, rtSize, false, gd.PresentationParameters.BackBufferFormat, DepthFormat.None);
+            }
+            gd.SetRenderTarget(_cosmicRT);
+            gd.Clear(Color.Transparent);
+            Effect cosmicEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/CosmicShader", AssetRequestMode.ImmediateLoad).Value;
+            cosmicEffect.Parameters["uScreenOffset"].SetValue(Main.player[Main.myPlayer].position / 256f);
+            cosmicEffect.Parameters["uMaskTexture"].SetValue(TextureAssets.MagicPixel.Value);
+            cosmicEffect.Parameters["uTime"].SetValue(Main.GlobalTimeWrappedHourly * 1f);
+            cosmicEffect.Parameters["uAlpha"].SetValue(1f);
+            cosmicEffect.Parameters["uSpeed"].SetValue(0.006f);
+            cosmicEffect.Parameters["uStarDensity"].SetValue(0.1f);
+            cosmicEffect.Parameters["uBrightness"].SetValue(1.3f);
+            cosmicEffect.Parameters["externalScale"].SetValue(0.3f);
+            cosmicEffect.Parameters["uLayers"].SetValue(16);
+            for (int i = 0; i < 10; i++)
+            {
+                string texName = "uTexture" + (i + 1);
+                Texture2D? starTex = AvaritiaFrameSystem.CosmicTextures[i]?.GetCurrentFrame();
+                cosmicEffect.Parameters[texName].SetValue(starTex);
+            }
+            SpriteBatch sb = new(gd);
+            sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, cosmicEffect, Matrix.Identity);
+            cosmicEffect.CurrentTechnique.Passes[0].Apply();
+            sb.Draw(TextureAssets.MagicPixel.Value, new Rectangle(0, 0, rtSize, rtSize), Color.White);
+            sb.End();
+            sb.Dispose();
+            gd.SetRenderTarget(Main.screenTarget);
         }
         private void NextAttackType()
         {
@@ -291,7 +332,7 @@
             player.direction = Projectile.spriteDirection;
             if (_isCosmicPhase)
             {
-                WarpSystem.RenderCosmicRT(_cosmicCenter, _cosmicRadius);
+                RenderCosmicRT(_cosmicRadius);
             }
         }
         private void SpawnParticles(int prepare, int swing, int unwind)
@@ -359,6 +400,14 @@
                     d.fadeIn = 1.2f;
                 }
             }
+        }
+        public override void Unload()
+        {
+            Main.QueueMainThreadAction(() =>
+            {
+                _cosmicRT?.Dispose();
+                _cosmicRT = null;
+            });
         }
         public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
         {
@@ -614,11 +663,11 @@
             float zoom = Main.GameViewMatrix.ZoomMatrix.M11;
             Vector2 screenCenter = new Vector2(Main.screenWidth, Main.screenHeight) / 2f;
             Vector2 screenCenterPos = (_cosmicCenter - Main.screenPosition) * zoom + screenCenter * (1f - zoom);
-            float? screenRadius = WarpSystem.CosmicRT?.Width / 2f;
+            float? screenRadius = _cosmicRT?.Width / 2f;
             effect.Parameters["uCosmicCenterScreen"].SetValue(screenCenterPos);
             effect.Parameters["uCosmicRTRadiusPixels"].SetValue(screenRadius ?? 0f);
             effect.Parameters["tex0"].SetValue(ModContent.Request<Texture2D>("AvaritiaMod/Assets/Textures/KnifeLight").Value);
-            effect.Parameters["tex1"].SetValue(WarpSystem.CosmicRT);
+            effect.Parameters["tex1"].SetValue(_cosmicRT);
             effect.CurrentTechnique.Passes["CosmicTrail"].Apply();
             gd.DrawUserPrimitives(PrimitiveType.TriangleStrip, [.. vertices], 0, vertices.Count - 2);
         }

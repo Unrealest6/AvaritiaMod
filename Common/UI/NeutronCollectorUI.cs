@@ -1,17 +1,43 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 中子态素收集器UI组件
+    /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class NeutronCollectorUI : DragUIState<UIPanel>
     {
-        private UIText? _title;
-        private UIText? _processText;
-        private UITextPanel<string>? _closeButton;
+        /// <summary>
+        /// 输出槽 UI 元素实例
+        /// </summary>
         public NeutronCollectorOutputSlot? OutputSlot { get; private set; }
+        /// <summary>
+        /// 中子态素收集器物块实体实例
+        /// </summary>
         public NeutronCollectorTileEntity TileEntity { get; }
+        /// <summary>
+        /// 标题文本 UI 实例
+        /// </summary>
+        private UIText? _title;
+        /// <summary>
+        /// 处理进度文本 UI 实例
+        /// </summary>
+        private UIText? _processText;
+        /// <summary>
+        /// 关闭按钮 UI 实例
+        /// </summary>
+        private UITextPanel<string>? _closeButton;
+        /// <summary>
+        /// 构造方法，使用反射构造
+        /// </summary>
+        /// <param name="tileEntity">中子态素收集器物块实体实例</param>
         public NeutronCollectorUI(NeutronCollectorTileEntity tileEntity)
         {
             TileEntity = tileEntity;
             Element = new UIPanel();
         }
+        /// <summary>
+        /// 初始化 UI 组件。创建主面板、标题、进度文本、关闭按钮和输出槽。
+        /// </summary>
         public override void OnInitialize()
         {
             if (Element is null)
@@ -56,6 +82,9 @@
             OutputSlot.Left.Set(0, 0.38f);
             Element.Append(OutputSlot);
         }
+        /// <summary>
+        /// UI 激活时调用。恢复上次保存的面板位置。
+        /// </summary>
         public override void OnActivate()
         {
             if (Element is null)
@@ -65,6 +94,9 @@
             Element.Left = TileEntity.Styles[0];
             Element.Top = TileEntity.Styles[1];
         }
+        /// <summary>
+        /// UI 关闭时调用。将当前面板位置保存到物块实体。
+        /// </summary>
         public override void OnDeactivate()
         {
             if (Element is null)
@@ -74,6 +106,10 @@
             TileEntity.Styles[0] = Element.Left;
             TileEntity.Styles[1] = Element.Top;
         }
+        /// <summary>
+        /// 每帧更新 UI。处理 Escape 键关闭，并刷新处理进度文本。
+        /// </summary>
+        /// <param name="gameTime">游戏时间信息。</param>
         public override void Update(GameTime gameTime)
         {
             if (Main.keyState.IsKeyDown(Keys.Escape))

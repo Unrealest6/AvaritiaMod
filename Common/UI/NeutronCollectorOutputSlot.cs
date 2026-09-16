@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 中子态素收集器输出槽UI元素
+    /// </summary>
     public sealed class NeutronCollectorOutputSlot : AvaritiaOutputSlot
     {
         protected override void OnItemChanged()

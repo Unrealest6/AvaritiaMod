@@ -1,9 +1,15 @@
-﻿using AvaritiaMod;
-
-namespace AvaritiaMod.Common.UI
+﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 二重压缩工作台UI组件
+    /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class DoubleCompressedCraftingTableUI : CraftingTableUI
     {
+        /// <summary>
+        /// 构造方法，使用反射构造
+        /// </summary>
+        /// <param name="tileEntity">工作台物块实体实例</param>
         public DoubleCompressedCraftingTableUI(CraftingTableTileEntity tileEntity) : base(tileEntity) { }
         protected override BoundedSize Size => 6;
         protected override Vector2 PanelSize => new(650, 364);

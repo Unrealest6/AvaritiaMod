@@ -1,11 +1,20 @@
 ﻿namespace AvaritiaMod.Common.Systems
 {
+    /// <summary>
+    /// 无尽贪婪与物块实体绑定的拖拽UI系统
+    /// </summary>
+    /// <typeparam name="T">拖拽UI类型</typeparam>
+    /// <typeparam name="TEntity">物块实体实例</typeparam>
     public abstract class AvaritiaUISystem<T, TEntity> : DragUISystem<AvaritiaUISystem<T, TEntity>, T> where T : DragUIState<UIPanel> where TEntity : TileEntity
     {
         /// <summary>
         /// 当前物块位置
         /// </summary>
         private Point16? _currentTilePos;
+        /// <summary>
+        /// 在工作台物块实体中绑定展示的UI
+        /// </summary>
+        /// <param name="tileEntity">物块实体实例</param>
         protected virtual void ShowUITileEntity(TEntity tileEntity) { }
         /// <summary>
         /// 指定位置物块是否是该UI对应的物块

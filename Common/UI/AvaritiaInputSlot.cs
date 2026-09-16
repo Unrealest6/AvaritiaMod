@@ -1,24 +1,44 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 无尽贪婪的输入槽UI元素
+    /// </summary>
     public abstract class AvaritiaInputSlot : UIElement
     {
+        /// <summary>
+        /// 槽位物品
+        /// </summary>
         public Item Item { get; set; } = new();
-        protected Item OldItem { get; set; }
+        /// <summary>
+        /// 槽位前物品，用于物品改变时判定
+        /// </summary>
+        private Item OldItem { get; set; }
+        /// <summary>
+        /// 构造方法，初始化UI和将<see cref="Item"/>克隆到<see cref="OldItem"/>
+        /// </summary>
         protected AvaritiaInputSlot()
         {
             OldItem = Item.Clone();
             Width.Set(52, 0f);
             Height.Set(52, 0f);
         }
+        /// <summary>
+        /// 静默改变<see cref="Item"/>和<see cref="OldItem"/>，防止触发<see cref="OnItemChanged"/>方法
+        /// </summary>
+        /// <param name="newItem">新物品实例</param>
         public void SetItemSilently(Item newItem)
         {
             Item = newItem.Clone();
             OldItem = Item.Clone();
         }
+        /// <summary>
+        /// 当<see cref="Item"/>与<see cref="OldItem"/>不同时触发
+        /// </summary>
         protected virtual void OnItemChanged() { }
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
+            //判定OldItem是否与Item相同，不相同则触发OnItemChanged方法并将Item克隆到OldItem
             if (OldItem.type == Item.type && OldItem.stack == Item.stack && OldItem.prefix == Item.prefix && OldItem.maxStack == Item.maxStack
                 && OldItem.damage == Item.damage && OldItem.crit == Item.crit && OldItem.defense == Item.defense
                 && OldItem.DamageType == Item.DamageType && OldItem.shoot == Item.shoot)
@@ -28,6 +48,10 @@
             OnItemChanged();
             OldItem = Item.Clone();
         }
+        /// <summary>
+        /// 处理槽位及其中物品的绘制
+        /// </summary>
+        /// <param name="spriteBatch"></param>
         protected override void DrawSelf(SpriteBatch spriteBatch)
         {
             Rectangle rect = GetDimensions().ToRectangle();
@@ -45,9 +69,14 @@
             {
                 Main.cursorOverride = 6;
             }
+            //鼠标位于槽位范围内并且槽位中物品不为空时将Item克隆到HoverItem
             Main.HoverItem = Item.Clone();
             Main.hoverItemName = Item.Name;
         }
+        /// <summary>
+        /// 处理左键单击逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void LeftClick(UIMouseEvent evt)
         {
             base.LeftClick(evt);
@@ -113,6 +142,10 @@
             }
             SwapWithMouse();
         }
+        /// <summary>
+        /// 处理右键单击逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void RightClick(UIMouseEvent evt)
         {
             base.RightClick(evt);
@@ -157,6 +190,9 @@
             }
             SwapWithMouse();
         }
+        /// <summary>
+        /// 交换鼠标和槽位中物品
+        /// </summary>
         private void SwapWithMouse()
         {
             (Main.mouseItem, Item) = (Item.Clone(), Main.mouseItem.Clone());

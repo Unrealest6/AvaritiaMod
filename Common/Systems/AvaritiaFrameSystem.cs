@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common.Systems
 {
+    /// <summary>
+    /// 无尽贪婪一些序列帧资源加载系统
+    /// </summary>
     public sealed class AvaritiaFrameSystem : ModSystem
     {
         /// <summary>

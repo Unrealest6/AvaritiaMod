@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 压缩机输出槽位UI元素
+    /// </summary>
     public sealed class CompressorOutputSlot : AvaritiaOutputSlot
     {
         protected override void OnItemChanged()

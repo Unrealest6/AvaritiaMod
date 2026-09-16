@@ -1,21 +1,44 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 无尽贪婪的输出槽UI元素
+    /// </summary>
     public abstract class AvaritiaOutputSlot : UIElement
     {
+        /// <summary>
+        /// 槽位物品
+        /// </summary>
         public Item Item { get; set; } = new();
-        protected Item OldItem { get; set; }
+        /// <summary>
+        /// 槽位前物品，用于物品改变时判定
+        /// </summary>
+        private Item OldItem { get; set; }
+        /// <summary>
+        /// 构造方法，初始化UI和将<see cref="Item"/>克隆到<see cref="OldItem"/>
+        /// </summary>
         protected AvaritiaOutputSlot()
         {
             OldItem = Item.Clone();
             Width.Set(78, 0);
             Height.Set(78, 0);
         }
+        /// <summary>
+        /// 静默改变<see cref="Item"/>和<see cref="OldItem"/>，防止触发<see cref="OnItemChanged"/>方法
+        /// </summary>
+        /// <param name="newItem">新物品实例</param>
         public void SetItemSilently(Item newItem)
         {
             Item = newItem.Clone();
             OldItem = Item.Clone();
         }
+        /// <summary>
+        /// 当<see cref="Item"/>与<see cref="OldItem"/>不同时触发
+        /// </summary>
         protected virtual void OnItemChanged() { }
+        /// <summary>
+        /// 处理鼠标单击逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         protected virtual void MouseClick(UIMouseEvent evt)
         {
             if (Item.IsAir)
@@ -24,7 +47,7 @@
                 return;
             }
             bool shift = Main.keyState.IsKeyDown(Keys.LeftShift);
-            if (!TryGiveToMouseOrInventory(Item, shift))
+            if (!TryGiveToMouseOrInventory(shift))
             {
                 return;
             }
@@ -33,6 +56,7 @@
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
+            //判定OldItem是否与Item相同，不相同则触发OnItemChanged方法并将Item克隆到OldItem
             if (OldItem.type == Item.type && OldItem.stack == Item.stack && OldItem.prefix == Item.prefix && OldItem.maxStack == Item.maxStack
                 && OldItem.damage == Item.damage && OldItem.crit == Item.crit && OldItem.defense == Item.defense
                 && OldItem.DamageType == Item.DamageType && OldItem.shoot == Item.shoot)
@@ -42,6 +66,10 @@
             OnItemChanged();
             OldItem = Item.Clone();
         }
+        /// <summary>
+        /// 处理槽位及其中物品的绘制
+        /// </summary>
+        /// <param name="spriteBatch"></param>
         protected override void DrawSelf(SpriteBatch spriteBatch)
         {
             Texture2D bg = IsMouseHovering ? TextureAssets.InventoryBack15.Value : TextureAssets.InventoryBack4.Value;
@@ -64,40 +92,45 @@
             base.RightClick(evt);
             MouseClick(evt);
         }
-        private bool TryGiveToMouseOrInventory(Item item, bool shift)
+        /// <summary>
+        /// 尝试将<see cref="Item"/>获取到鼠标或物品栏中
+        /// </summary>
+        /// <param name="shift">是否按下shift</param>
+        /// <returns></returns>
+        private bool TryGiveToMouseOrInventory(bool shift)
         {
-            if (item.IsAir)
+            if (Item.IsAir)
             {
                 return false;
             }
             if (shift)
             {
-                AvaritiaUIUtils.MoveItemToPlayerInventory(item);
+                AvaritiaUIUtils.MoveItemToPlayerInventory(Item);
                 OnItemChanged();
-                return item.IsAir;
+                return Item.IsAir;
             }
             if (Main.mouseItem.IsAir)
             {
-                Main.mouseItem = item.Clone();
-                item.TurnToAir();
+                Main.mouseItem = Item.Clone();
+                Item.TurnToAir();
                 OnItemChanged();
                 return true;
             }
-            if (Main.mouseItem.type != item.type || Main.mouseItem.maxStack != item.maxStack)
+            if (Main.mouseItem.type != Item.type || Main.mouseItem.maxStack != Item.maxStack)
             {
                 return false;
             }
             int space = Main.mouseItem.maxStack - Main.mouseItem.stack;
-            if (space >= item.stack)
+            if (space >= Item.stack)
             {
-                Main.mouseItem.stack += item.stack;
-                item.TurnToAir();
+                Main.mouseItem.stack += Item.stack;
+                Item.TurnToAir();
                 OnItemChanged();
                 return true;
             }
-            item.stack -= space;
+            Item.stack -= space;
             OnItemChanged();
-            Main.mouseItem.stack = item.maxStack;
+            Main.mouseItem.stack = Item.maxStack;
             return false;
         }
     }

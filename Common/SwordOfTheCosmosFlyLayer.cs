@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common
 {
+    /// <summary>
+    /// 处理玩家物品栏拥有无尽剑飞行的绘制层
+    /// </summary>
     public sealed class SwordOfTheCosmosFlyLayer : PlayerDrawLayer
     {
         public override Position GetDefaultPosition() => new AfterParent(PlayerDrawLayers.Shield);

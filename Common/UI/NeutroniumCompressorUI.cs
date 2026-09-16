@@ -1,23 +1,67 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 中子态素压缩机UI组件
+    /// </summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class NeutroniumCompressorUI : DragUIState<UIPanel>
     {
+        /// <summary>
+        /// 输入槽 UI 元素实例
+        /// </summary>
         public CompressorInputSlot? InputSlot { get; private set; }
+        /// <summary>
+        /// 输出槽 UI 元素实例
+        /// </summary>
         public CompressorOutputSlot? OutputSlot { get; private set; }
-        private ShowItemSlot? _showInputSlot;
-        private ShowItemSlot? _showOutputSlot;
-        private UIText? _title;
-        private UIText? _processText;
-        private UIText? _inputText;
-        private UIText? _outputText;
-        private UITextPanel<string>? _closeButton;
-        private CroppedUIImage? _fullSingularity;
+        /// <summary>
+        /// 中子态素压缩机物块实体实例
+        /// </summary>
         public NeutroniumCompressorTileEntity TileEntity { get; }
+        /// <summary>
+        /// 输入物品展示槽 UI 实例
+        /// </summary>
+        private ShowItemSlot? _showInputSlot;
+        /// <summary>
+        /// 输出物品展示槽 UI 实例
+        /// </summary>
+        private ShowItemSlot? _showOutputSlot;
+        /// <summary>
+        /// 标题文本 UI 实例
+        /// </summary>
+        private UIText? _title;
+        /// <summary>
+        /// 处理进度文本 UI 实例
+        /// </summary>
+        private UIText? _processText;
+        /// <summary>
+        /// 输入文本标签 UI 实例
+        /// </summary>
+        private UIText? _inputText;
+        /// <summary>
+        /// 输出文本标签 UI 实例
+        /// </summary>
+        private UIText? _outputText;
+        /// <summary>
+        /// 关闭按钮 UI 实例
+        /// </summary>
+        private UITextPanel<string>? _closeButton;
+        /// <summary>
+        /// 奇点填充进度图像 UI 实例
+        /// </summary>
+        private CroppedUIImage? _fullSingularity;
+        /// <summary>
+        /// 构造方法，使用反射构造
+        /// </summary>
+        /// <param name="tileEntity">中子态素收集器物块实体实例</param>
         public NeutroniumCompressorUI(NeutroniumCompressorTileEntity tileEntity)
         {
             TileEntity = tileEntity;
             Element = new UIPanel();
         }
+        /// <summary>
+        /// 初始化 UI 组件。创建主面板、标题、进度文本、输入输出槽、箭头图以及关闭按钮。
+        /// </summary>
         public override void OnInitialize()
         {
             if (Element is null)
@@ -71,7 +115,7 @@
             _showOutputSlot.Top.Set(0, 0.42f);
             _showOutputSlot.Left.Set(0, 0.86f);
             Element.Append(_showOutputSlot);
-            UIImage image = new(ModContent.Request<Texture2D>("AvaritiaMod/Assets/Textures/UI/ArmorUI", AssetRequestMode.ImmediateLoad));
+            UIImage image = new(ModContent.Request<Texture2D>("AvaritiaMod/Assets/Textures/UI/ArrowUI", AssetRequestMode.ImmediateLoad));
             image.Top.Set(0, 0.43f);
             image.Left.Set(0, 0.36f);
             Element.Append(image);
@@ -84,6 +128,9 @@
             _fullSingularity.Left.Set(0, 0.53f);
             Element.Append(_fullSingularity);
         }
+        /// <summary>
+        /// UI 激活时调用。恢复上次保存的面板位置。
+        /// </summary>
         public override void OnActivate()
         {
             if (Element is null)
@@ -93,6 +140,9 @@
             Element.Left = TileEntity.Styles[0];
             Element.Top = TileEntity.Styles[1];
         }
+        /// <summary>
+        /// UI 关闭时调用。将当前面板位置保存到物块实体。
+        /// </summary>
         public override void OnDeactivate()
         {
             if (Element is null)
@@ -102,6 +152,10 @@
             TileEntity.Styles[0] = Element.Left;
             TileEntity.Styles[1] = Element.Top;
         }
+        /// <summary>
+        /// 每帧更新 UI。处理 Escape 键关闭，刷新处理进度、输入输出展示槽及奇点填充效果。
+        /// </summary>
+        /// <param name="gameTime">游戏时间信息。</param>
         public override void Update(GameTime gameTime)
         {
             if (Main.keyState.IsKeyDown(Keys.Escape))

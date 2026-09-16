@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common
 {
+    /// <summary>
+    /// 处理玩家背着无尽剑的绘制层
+    /// </summary>
     public sealed class SwordOfTheCosmosBackLayer : PlayerDrawLayer
     {
         public override Position GetDefaultPosition() => new AfterParent(PlayerDrawLayers.BackAcc);

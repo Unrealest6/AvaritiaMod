@@ -1,11 +1,31 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 无尽贪婪合成配方槽位UI元素
+    /// </summary>
     public sealed class AvaritiaRecipeItemSlot : UIElement
     {
-        private static Item? _highlightedResult;
+        /// <summary>
+        /// 结果物品实例
+        /// </summary>
         private readonly Item _resultItem;
+        /// <summary>
+        /// 配方实例
+        /// </summary>
         private readonly AvaritiaRecipe _recipe;
-        private readonly int _size;
+        /// <summary>
+        /// 配方尺寸
+        /// </summary>
+        private readonly BoundedSize _size;
+        /// <summary>
+        /// 高亮配方结果物品实例
+        /// </summary>
+        private Item? _highlightedResult;
+        /// <summary>
+        /// 扫描玩家背包的前 50 个物品栏，统计每种物品的总数量及其在背包中的索引队列。
+        /// 用于后续自动分配合成材料时快速查找和扣除物品。
+        /// </summary>
+        /// <returns>字典，键为物品类型 ID，值为该物品的总数量和对应的背包索引队列。</returns>
         private static Dictionary<int, (int total, Queue<int> indices)> ScanBackpack()
         {
             Dictionary<int, (int total, Queue<int> indices)> result = [];
@@ -26,6 +46,13 @@
             }
             return result;
         }
+        /// <summary>
+        /// 为每个配方槽位选择一种材料类型，使得在材料限制下能够合成的份数最多。
+        /// 通过二分搜索最大可合成份数 K，并调用 <see cref="TryAllocate"/> 验证可行性。
+        /// </summary>
+        /// <param name="slotOptions">每个槽位可接受的材料选项列表，每项包含类型、单份需求和最大堆叠。</param>
+        /// <param name="available">当前可用的材料总量，键为物品类型 ID，值为总数量。</param>
+        /// <returns>成功时返回每个槽位分配的材料类型数组；若无法分配则返回 null。</returns>
         private static int[]? FindBestAssignment(List<List<(int type, int need, int maxStack)>> slotOptions, IReadOnlyDictionary<int, int> available)
         {
             int slotCount = slotOptions.Count;
@@ -74,6 +101,16 @@
             }
             return bestAssignment;
         }
+        /// <summary>
+        /// 在给定目标合成份数 K 下，尝试为每个槽位分配一种材料。
+        /// 采用贪心策略：优先处理可选材料较少的槽位，并选择使各材料剩余容量比例最均衡的选项。
+        /// </summary>
+        /// <param name="slotOptions">每个槽位可接受的材料选项列表。</param>
+        /// <param name="typeList">所有涉及的材料类型列表（去重）。</param>
+        /// <param name="available">材料总量字典。</param>
+        /// <param name="K">目标合成份数。</param>
+        /// <param name="sortedIndices">按槽位选项数量升序排列的槽位索引数组。</param>
+        /// <returns>成功时返回每个槽位分配的材料类型数组；若无法分配则返回 null。</returns>
         private static int[]? TryAllocate(List<List<(int type, int need, int maxStack)>> slotOptions, List<int> typeList, IReadOnlyDictionary<int, int> available, long K, int[] sortedIndices)
         {
             int slotCount = slotOptions.Count;
@@ -134,6 +171,13 @@
             }
             return assignment;
         }
+        /// <summary>
+        /// 从物品列表中取出指定数量的物品。优先从单个堆叠中扣除；若不足，则合并多个堆叠。
+        /// 取出的物品以新的 <see cref="Item"/> 实例返回，同时更新源列表。
+        /// </summary>
+        /// <param name="source">物品来源列表。</param>
+        /// <param name="amount">需要取出的数量。</param>
+        /// <returns>取出的物品实例；若无法取出足够数量则返回 null。</returns>
         private static Item? TakeFromList(List<Item> source, int amount)
         {
             if (source.Count == 0)
@@ -190,6 +234,11 @@
             result.stack = amount;
             return result;
         }
+        /// <summary>
+        /// 将物品安全地放回玩家背包。优先合并到已有的相同堆叠中，其次寻找空位放入，
+        /// 若背包已满则直接在玩家位置生成掉落物。
+        /// </summary>
+        /// <param name="item">要放回的物品实例。</param>
         private static void SafeReturnToInventory(Item item)
         {
             if (item.IsAir || item.stack <= 0)
@@ -244,6 +293,10 @@
                 Main.LocalPlayer.QuickSpawnItem(null, part, part.stack);
             }
         }
+        /// <summary>
+        /// 构造方法，初始化配方结果槽位，绑定指定的配方并设置 UI 尺寸。
+        /// </summary>
+        /// <param name="recipe">该槽位对应的合成配方。</param>
         public AvaritiaRecipeItemSlot(AvaritiaRecipe recipe)
         {
             _recipe = recipe;
@@ -253,6 +306,10 @@
             Width.Set(72, 0f);
             Height.Set(72, 0f);
         }
+        /// <summary>
+        /// 绘制槽位背景和结果物品。若鼠标悬停则显示物品提示；若当前配方被高亮则使用高亮背景和放大效果。
+        /// </summary>
+        /// <param name="spriteBatch">用于绘制的 SpriteBatch 实例。</param>
         protected override void DrawSelf(SpriteBatch spriteBatch)
         {
             Rectangle rect = GetDimensions().ToRectangle();
@@ -266,6 +323,10 @@
             Color tint = isHighlighted ? Color.White : Color.White * 0.4f;
             AvaritiaUIUtils.DrawItemSlot(spriteBatch, _resultItem, rect.TopLeft(), bg, itemColor: tint, scale: isHighlighted ? 1.4f : 1.2f);
         }
+        /// <summary>
+        /// 处理左键单击：高亮当前配方，并在合成台各槽位中显示该配方所需的材料列表。
+        /// </summary>
+        /// <param name="evt">鼠标事件参数。</param>
         public override void LeftClick(UIMouseEvent evt)
         {
             base.LeftClick(evt);
@@ -288,6 +349,10 @@
             }
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
+        /// <summary>
+        /// 处理右键单击：若当前配方已高亮，则取消高亮并清除各槽位显示的材料列表。
+        /// </summary>
+        /// <param name="evt">鼠标事件参数。</param>
         public override void RightClick(UIMouseEvent evt)
         {
             base.RightClick(evt);
@@ -309,6 +374,10 @@
             }
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
+        /// <summary>
+        /// 处理左键双击：扫描背包，自动将配方所需的材料分配到合成台槽位中，并刷新配方列表。
+        /// </summary>
+        /// <param name="evt">鼠标事件参数。</param>
         public override void LeftDoubleClick(UIMouseEvent evt)
         {
             base.LeftDoubleClick(evt);
@@ -316,6 +385,12 @@
             DistributeIngredients(backpack);
             Recipe.FindRecipes();
         }
+        /// <summary>
+        /// 核心自动分配逻辑。收集合成台现有物品和背包中配方需要的材料，构建每个槽位的可选材料列表，
+        /// 调用 <see cref="FindBestAssignment"/> 计算最佳分配方案，然后按最大可合成份数将材料分配到各槽位，
+        /// 最后将剩余材料安全退回背包。
+        /// </summary>
+        /// <param name="backpack">已扫描的背包物品统计信息。</param>
         private void DistributeIngredients(Dictionary<int, (int total, Queue<int> indices)> backpack)
         {
             if (Parent.Parent.Parent.Parent is not CraftingTableUI parent)
@@ -551,6 +626,14 @@
                 SafeReturnToInventory(item);
             }
         }
+        /// <summary>
+        /// 将单一类型的材料按需求比例分配到多个槽位。分配时受每个槽位的最大堆叠限制，
+        /// 并从提供的物品池中取出对应数量的物品放入槽位。
+        /// </summary>
+        /// <param name="type">材料类型 ID。</param>
+        /// <param name="positions">需要该材料的槽位列表，包含坐标、单份需求和最大堆叠。</param>
+        /// <param name="totalAvailable">该材料的总可用数量。</param>
+        /// <param name="pool">该材料的物品池，用于实际取出物品。</param>
         private void SmartDistributeSingleType(int type, List<(int x, int y, int need, int maxStack)> positions, int totalAvailable, List<Item> pool)
         {
             if (Parent.Parent.Parent.Parent is not CraftingTableUI parent)

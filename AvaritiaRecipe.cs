@@ -7,7 +7,7 @@
         public static event hook_Register? Hook_Register;
         public static IReadOnlySet<AvaritiaRecipe> Recipes => _recipes;
         private static readonly HashSet<AvaritiaRecipe> _recipes = [];
-        public byte Size { get; }
+        public BoundedSize Size { get; }
         public Item Result { get; }
         public bool IsOrdered { get; }
         private List<Item>[,] _ingredients;

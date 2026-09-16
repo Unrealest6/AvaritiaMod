@@ -1,5 +1,8 @@
 ﻿namespace AvaritiaMod.Common.Systems
 {
+    /// <summary>
+    /// 宇宙球体系统
+    /// </summary>
     public sealed class CosmicSphereSystem : ModSystem
     {
         /// <summary>

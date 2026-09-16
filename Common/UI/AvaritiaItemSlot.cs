@@ -1,75 +1,41 @@
 ﻿namespace AvaritiaMod.Common.UI
 {
+    /// <summary>
+    /// 无尽贪婪合成输入槽UI元素
+    /// </summary>
     public sealed class AvaritiaItemSlot : AvaritiaInputSlot
     {
-        private int SlotX { get; }
-        private int SlotY { get; }
-        private const int DoubleClickCooldownFrames = 12;
-        public List<Item> ShowItems { get; set; } = [];
+        /// <summary>
+        /// 最后一次点击的update值
+        /// </summary>
         private static ulong _lastDoubleClickFrame;
-        private void GatherFromAllSlots(ref Item target)
-        {
-            if (Parent.Parent is not CraftingTableUI parent || parent.Slots is null)
-            {
-                return;
-            }
-            foreach (AvaritiaItemSlot slot in parent.Slots)
-            {
-                if (slot.Item.IsAir || slot.Item.type != target.type)
-                {
-                    continue;
-                }
-                int space = target.maxStack - target.stack;
-                if (space <= 0)
-                {
-                    break;
-                }
-                if (space >= slot.Item.stack)
-                {
-                    target.stack += slot.Item.stack;
-                    slot.Item.TurnToAir();
-                }
-                else
-                {
-                    slot.Item.stack -= space;
-                    target.stack = target.maxStack;
-                    return;
-                }
-            }
-        }
-        private static void GatherFromPlayerInventory(ref Item target)
-        {
-            for (int i = 0; i < 50; i++)
-            {
-                Item inv = Main.LocalPlayer.inventory[i];
-                if (inv?.IsAir != false || inv.type != target.type)
-                {
-                    continue;
-                }
-                int space = target.maxStack - target.stack;
-                if (space <= 0)
-                {
-                    break;
-                }
-                if (space >= inv.stack)
-                {
-                    target.stack += inv.stack;
-                    inv.TurnToAir();
-                }
-                else
-                {
-                    inv.stack -= space;
-                    target.stack = target.maxStack;
-                    return;
-                }
-            }
-        }
+        /// <summary>
+        /// 展示合成配方的物品列表
+        /// </summary>
+        public List<Item> ShowItems { get; set; } = [];
+        /// <summary>
+        /// 槽位X坐标
+        /// </summary>
+        private int SlotX { get; }
+        /// <summary>
+        /// 槽位Y坐标
+        /// </summary>
+        private int SlotY { get; }
+        /// <summary>
+        /// 构造方法，初始化槽位坐标与物品
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
         public AvaritiaItemSlot(int x, int y)
         {
             SlotX = x;
             SlotY = y;
             Item = new Item();
         }
+        /// <summary>
+        /// 绘制槽位中物品或展示物品
+        /// </summary>
+        /// <param name="spriteBatch"></param>
         protected override void DrawSelf(SpriteBatch spriteBatch)
         {
             Rectangle rect = GetDimensions().ToRectangle();
@@ -131,9 +97,13 @@
                 DragManager.MouseUp();
             }
         }
+        /// <summary>
+        /// 处理左键单击逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void LeftClick(UIMouseEvent evt)
         {
-            if (Main.GameUpdateCount <= _lastDoubleClickFrame + DoubleClickCooldownFrames)
+            if (Main.GameUpdateCount <= _lastDoubleClickFrame + 12)
             {
                 return;
             }
@@ -143,6 +113,10 @@
             }
             base.LeftClick(evt);
         }
+        /// <summary>
+        /// 处理左键双击逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void LeftDoubleClick(UIMouseEvent evt)
         {
             base.LeftDoubleClick(evt);
@@ -151,8 +125,57 @@
                 return;
             }
             int startStack = Main.mouseItem.stack;
-            GatherFromAllSlots(ref Main.mouseItem);
-            GatherFromPlayerInventory(ref Main.mouseItem);
+            if (Parent.Parent is not CraftingTableUI parent || parent.Slots is null)
+            {
+                return;
+            }
+            foreach (AvaritiaItemSlot slot in parent.Slots)
+            {
+                if (slot.Item.IsAir || slot.Item.type != Main.mouseItem.type)
+                {
+                    continue;
+                }
+                int space = Main.mouseItem.maxStack - Main.mouseItem.stack;
+                if (space <= 0)
+                {
+                    break;
+                }
+                if (space >= slot.Item.stack)
+                {
+                    Main.mouseItem.stack += slot.Item.stack;
+                    slot.Item.TurnToAir();
+                }
+                else
+                {
+                    slot.Item.stack -= space;
+                    Main.mouseItem.stack = Main.mouseItem.maxStack;
+                    return;
+                }
+            }
+            for (int i = 0; i < 50; i++)
+            {
+                Item inv = Main.LocalPlayer.inventory[i];
+                if (inv?.IsAir != false || inv.type != Main.mouseItem.type)
+                {
+                    continue;
+                }
+                int space = Main.mouseItem.maxStack - Main.mouseItem.stack;
+                if (space <= 0)
+                {
+                    break;
+                }
+                if (space >= inv.stack)
+                {
+                    Main.mouseItem.stack += inv.stack;
+                    inv.TurnToAir();
+                }
+                else
+                {
+                    inv.stack -= space;
+                    Main.mouseItem.stack = Main.mouseItem.maxStack;
+                    return;
+                }
+            }
             if (Main.mouseItem.stack == startStack)
             {
                 return;
@@ -161,6 +184,10 @@
             _lastDoubleClickFrame = Main.GameUpdateCount;
             Recipe.FindRecipes();
         }
+        /// <summary>
+        /// 处理右键单击逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void RightClick(UIMouseEvent evt)
         {
             if (DragManager.IsInRollbackCooldown)
@@ -169,6 +196,10 @@
             }
             base.RightClick(evt);
         }
+        /// <summary>
+        /// 处理左键按下逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void LeftMouseDown(UIMouseEvent evt)
         {
             base.LeftMouseDown(evt);
@@ -183,6 +214,10 @@
                 DragManager.MouseDown(DragManager.DragType.Left, this);
             }
         }
+        /// <summary>
+        /// 处理右键按下逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void RightMouseDown(UIMouseEvent evt)
         {
             base.RightMouseDown(evt);
@@ -197,6 +232,10 @@
                 DragManager.MouseDown(DragManager.DragType.Right, this);
             }
         }
+        /// <summary>
+        /// 处理中键按下逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void MiddleMouseDown(UIMouseEvent evt)
         {
             base.MiddleMouseDown(evt);
@@ -207,6 +246,10 @@
             DragManager.RollbackDrag();
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
+        /// <summary>
+        /// 处理左键抬起逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void LeftMouseUp(UIMouseEvent evt)
         {
             base.LeftMouseUp(evt);
@@ -217,6 +260,10 @@
             DragManager.RollbackDrag();
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
+        /// <summary>
+        /// 处理右键抬起逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void RightMouseUp(UIMouseEvent evt)
         {
             base.RightMouseUp(evt);
@@ -227,6 +274,10 @@
             DragManager.RollbackDrag();
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
+        /// <summary>
+        /// 处理中键抬起逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void MiddleMouseUp(UIMouseEvent evt)
         {
             base.MiddleMouseUp(evt);
@@ -237,6 +288,10 @@
             DragManager.RollbackDrag();
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
+        /// <summary>
+        /// 处理鼠标经过逻辑
+        /// </summary>
+        /// <param name="evt"></param>
         public override void MouseOver(UIMouseEvent evt)
         {
             base.MouseOver(evt);
