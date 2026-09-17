@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.Items.Placeable
+namespace AvaritiaMod.Content.Items.Placeable
 {
     public abstract class CraftingTableItem : ModItem
     {
@@ -95,5 +95,9 @@
                 }
             }
         }
+        /// <summary>
+        /// 把本物品保存的内容物写入工作台实体（尺寸以实体为准，物品数组更小时补空）。
+        /// </summary>
+        internal void ApplyTo(CraftingTableTileEntity entity) => entity.ApplyItems(Items);
     }
 }

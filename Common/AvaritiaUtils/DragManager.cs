@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.AvaritiaUtils
+namespace AvaritiaMod.Common.AvaritiaUtils
 {
     /// <summary>
     /// 拖拽管理器
@@ -64,8 +64,27 @@
             _rollbackFrame = Main.GameUpdateCount;
             JustReleased = true;
         }
+        /// <summary>
+        /// 取消进行中的槽位拖拽（面板被拖拽时调用）。
+        /// <para>与 <see cref="RollbackDrag"/> 的区别：没有拖拽时什么都不做，
+        /// 避免把上一次的快照套用到当前鼠标物品上。</para>
+        /// </summary>
+        public static void CancelActiveDrag()
+        {
+            if (!IsDragging && StartSlot is null)
+            {
+                return;
+            }
+            RollbackDrag();
+        }
         public static void MouseDown(DragType type, AvaritiaItemSlot slot)
         {
+            //正在拖拽面板时不要开始槽位拖拽：玩家此时按住的是“移动窗口”，
+            //如果同时开始分堆，鼠标上的物品会被分到经过的每一个槽位里。
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                return;
+            }
             if (Main.mouseItem.IsAir || IsDragging)
             {
                 return;

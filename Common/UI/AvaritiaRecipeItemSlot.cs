@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 无尽贪婪合成配方槽位UI元素
@@ -18,9 +18,13 @@
         /// </summary>
         private readonly BoundedSize _size;
         /// <summary>
-        /// 高亮配方结果物品实例
+        /// 所属工作台界面（首次访问时沿父链解析并缓存）。
         /// </summary>
-        private Item? _highlightedResult;
+        private CraftingTableUI? _owner;
+        /// <summary>
+        /// 所属工作台界面。高亮状态由它统一持有，这样点击新配方时旧配方会自动失去高亮。
+        /// </summary>
+        private CraftingTableUI? Owner => _owner ??= Parent?.Parent?.Parent?.Parent as CraftingTableUI;
         /// <summary>
         /// 扫描玩家背包的前 50 个物品栏，统计每种物品的总数量及其在背包中的索引队列。
         /// 用于后续自动分配合成材料时快速查找和扣除物品。
@@ -302,7 +306,6 @@
             _recipe = recipe;
             _resultItem = recipe.Result;
             _size = recipe.Size;
-            _highlightedResult = null;
             Width.Set(72, 0f);
             Height.Set(72, 0f);
         }
@@ -318,23 +321,24 @@
                 Main.HoverItem = _resultItem.Clone();
                 Main.hoverItemName = _resultItem.Name;
             }
-            bool isHighlighted = _highlightedResult?.type == _resultItem.type;
+            bool isHighlighted = ReferenceEquals(Owner?.HighlightedRecipeSlot, this);
             Texture2D bg = isHighlighted ? TextureAssets.InventoryBack14.Value : TextureAssets.InventoryBack8.Value;
             Color tint = isHighlighted ? Color.White : Color.White * 0.4f;
             AvaritiaUIUtils.DrawItemSlot(spriteBatch, _resultItem, rect.TopLeft(), bg, itemColor: tint, scale: isHighlighted ? 1.4f : 1.2f);
         }
         /// <summary>
-        /// 处理左键单击：高亮当前配方，并在合成台各槽位中显示该配方所需的材料列表。
+        /// 处理左键单击：高亮当前配方（并自动取消上一个高亮），
+        /// 并在合成台各槽位中显示该配方所需的材料列表。
         /// </summary>
         /// <param name="evt">鼠标事件参数。</param>
         public override void LeftClick(UIMouseEvent evt)
         {
             base.LeftClick(evt);
-            if (Parent.Parent.Parent.Parent is not CraftingTableUI parent)
+            if (Owner is not { } parent)
             {
                 return;
             }
-            _highlightedResult = _resultItem;
+            parent.HighlightRecipe(this);
             for (int x = 0; x < _size; x++)
             {
                 for (int y = 0; y < _size; y++)
@@ -356,15 +360,11 @@
         public override void RightClick(UIMouseEvent evt)
         {
             base.RightClick(evt);
-            if (Parent.Parent.Parent.Parent is not CraftingTableUI parent)
+            if (Owner is not { } parent || !ReferenceEquals(parent.HighlightedRecipeSlot, this))
             {
                 return;
             }
-            if (_highlightedResult?.type != _resultItem.type)
-            {
-                return;
-            }
-            _highlightedResult = null;
+            parent.ClearRecipeHighlight(this);
             for (int x = 0; x < _size; x++)
             {
                 for (int y = 0; y < _size; y++)
@@ -393,7 +393,7 @@
         /// <param name="backpack">已扫描的背包物品统计信息。</param>
         private void DistributeIngredients(Dictionary<int, (int total, Queue<int> indices)> backpack)
         {
-            if (Parent.Parent.Parent.Parent is not CraftingTableUI parent)
+            if (Owner is not { } parent)
             {
                 return;
             }
@@ -636,7 +636,7 @@
         /// <param name="pool">该材料的物品池，用于实际取出物品。</param>
         private void SmartDistributeSingleType(int type, List<(int x, int y, int need, int maxStack)> positions, int totalAvailable, List<Item> pool)
         {
-            if (Parent.Parent.Parent.Parent is not CraftingTableUI parent)
+            if (Owner is not { } parent)
             {
                 return;
             }

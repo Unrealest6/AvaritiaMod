@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.Projectiles
+namespace AvaritiaMod.Content.Projectiles
 {
     public sealed class EndestPearlProjectile : ModProjectile
     {
@@ -237,19 +237,17 @@
                     {
                         continue;
                     }
-                    if (Main.netMode != NetmodeID.SinglePlayer)
-                    {
-                        ModPacket packet = Mod.GetPacket();
-                        packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                        packet.Write(x);
-                        packet.Write(y);
-                        packet.Send();
-                    }
-                    WorldGen.KillWall(x, y);
-                    WorldGen.KillTile(x, y);
                     if (Main.netMode == NetmodeID.MultiplayerClient)
                     {
+                        AvaritiaNet.RequestServerKillTile(x, y, noItem: false);
+                        WorldGen.KillWall(x, y);
+                        WorldGen.KillTile(x, y, noItem: true);
                         NetMessage.SendTileSquare(-1, x, y, 1);
+                    }
+                    else
+                    {
+                        WorldGen.KillWall(x, y);
+                        WorldGen.KillTile(x, y);
                     }
                 }
             }
@@ -280,17 +278,8 @@
                         Damage = 75
                     };
                     player.Hurt(info);
-                    if (Main.netMode != NetmodeID.SinglePlayer)
-                    {
-                        ModPacket packet = Mod.GetPacket();
-                        packet.Write((byte)AvaritiaMod.SyncMessageType.RequestHurtPlayer);
-                        packet.Write(player.whoAmI);
-                        packet.Write(Projectile.whoAmI);
-                        packet.Write(75);
-                        packet.Write(0);
-                        packet.Write(false);
-                        packet.Send();
-                    }
+                    //多人客户端：这次伤害由服务端广播给其它端（AvaritiaNet.RequestHurtPlayer 内部只在多人客户端发包）
+                    AvaritiaNet.RequestHurtPlayer(player.whoAmI, Projectile.whoAmI, 75, 0, false);
                 }
             }
         }
@@ -347,19 +336,17 @@
                     {
                         continue;
                     }
-                    if (Main.netMode != NetmodeID.SinglePlayer)
-                    {
-                        ModPacket packet = Mod.GetPacket();
-                        packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                        packet.Write(x);
-                        packet.Write(y);
-                        packet.Send();
-                    }
-                    WorldGen.KillWall(x, y);
-                    WorldGen.KillTile(x, y);
                     if (Main.netMode == NetmodeID.MultiplayerClient)
                     {
+                        AvaritiaNet.RequestServerKillTile(x, y, noItem: false);
+                        WorldGen.KillWall(x, y);
+                        WorldGen.KillTile(x, y, noItem: true);
                         NetMessage.SendTileSquare(-1, x, y, 1);
+                    }
+                    else
+                    {
+                        WorldGen.KillWall(x, y);
+                        WorldGen.KillTile(x, y);
                     }
                 }
             }

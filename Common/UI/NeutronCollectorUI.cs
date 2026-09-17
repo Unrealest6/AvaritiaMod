@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 中子态素收集器UI组件
@@ -26,6 +26,10 @@
         /// 关闭按钮 UI 实例
         /// </summary>
         private UITextPanel<string>? _closeButton;
+        /// <summary>
+        /// 直接拖动标题栏即可移动面板（无需按住 Shift，也不会先按到输出槽上）。
+        /// </summary>
+        protected override UIElement? DragHandle => _title;
         /// <summary>
         /// 构造方法，使用反射构造
         /// </summary>
@@ -63,17 +67,11 @@
                 VAlign = 0.85f
             };
             Element.Append(_processText);
-            _closeButton = new UITextPanel<string>(Language.GetTextValue("LegacyMisc.56"));
-            _closeButton.Width.Set(100, 0);
-            _closeButton.Height.Set(40, 0);
-            _closeButton.HAlign = 0.99f;
-            _closeButton.VAlign = 0.01f;
-            _closeButton.OnLeftClick += (_, _) =>
+            _closeButton = EternalUI.CreateCloseButton(Language.GetTextValue("LegacyMisc.56"), () =>
             {
                 Visible = false;
                 ModContent.GetInstance<NeutronCollectorUISystem>().HideUI();
-                SoundEngine.PlaySound(SoundID.MenuClose);
-            };
+            });
             Element.Append(_closeButton);
             OutputSlot = new NeutronCollectorOutputSlot();
             OutputSlot.Width.Set(78, 0);

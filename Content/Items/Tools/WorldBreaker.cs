@@ -1,6 +1,6 @@
-﻿namespace AvaritiaMod.Content.Items.Tools
+namespace AvaritiaMod.Content.Items.Tools
 {
-    public sealed class WorldBreaker : FrameItem
+    public sealed class WorldBreaker : AvaritiaModeItem
     {
         public override Dictionary<byte, FrameTexture?> FrameTextures => new()
         {
@@ -49,92 +49,66 @@
                 }
             }
         }
-        public override void HoldItem(Player player)
+        /// <summary>形态 0：无限镐力；形态 1：范围破坏。</summary>
+        protected override byte ModeCount => 2;
+        protected override void ApplyModeStats(Item heldItem, byte mode)
         {
-            if (!Main.keyState.IsKeyDown(Keys.LeftShift) || !Main.mouseRight || !Main.mouseRightRelease)
-            {
-                return;
-            }
-            Mode = (byte)(Mode == 0 ? 1 : 0);
-            Item.knockBack = Mode == 0 ? 2 : 32;
-            Item.pick = Mode == 0 ? int.MaxValue : 0;
+            heldItem.knockBack = mode == 0 ? 2 : 32;
+            heldItem.pick = mode == 0 ? int.MaxValue : 0;
         }
-        public override bool CanUseItem(Player player)
+        /// <summary>
+        /// 形态 1 的范围破坏。
+        /// <para>必须放在 <c>UseItem</c> 而不是 <c>CanUseItem</c>：后者一帧可能被调用多次，
+        /// 原实现把整片挖掘与物质团生成都写在里面，一次挥动会产出好几倍的掉落。</para>
+        /// </summary>
+        public override bool? UseItem(Player player)
         {
-            if (!player.IsInTileInteractionRange((int)(Main.MouseWorld.X / 16), (int)(Main.MouseWorld.Y / 16),
-                    TileReachCheckSettings.Simple) || !Main.tile[(int)Main.MouseWorld.X / 16, (int)Main.MouseWorld.Y / 16].HasTile || Mode != 1)
-            {
-                return base.CanUseItem(player);
-            }
-            List<Item> drops = [];
             int baseX = (int)(Main.MouseWorld.X / 16);
             int baseY = (int)(Main.MouseWorld.Y / 16);
+            if (!player.IsInTileInteractionRange(baseX, baseY, TileReachCheckSettings.Simple)
+                || !AvaritiaBreakHelper.InBounds(baseX, baseY)
+                || !Framing.GetTileSafely(baseX, baseY).HasTile
+                || GetHeldMode(player) != 1)
+            {
+                return base.UseItem(player);
+            }
+            List<Item> drops = [];
+            //一次挥动内同一个箱子只能处理一次：FindChestByGuessing 会命中箱子的多个相邻格子
+            HashSet<int> processedChests = [];
             for (int dx = -14; dx < 14; dx++)
             {
                 for (int dy = -14; dy < 14; dy++)
                 {
                     int x = baseX + dx;
                     int y = baseY + dy;
-                    if (x < 0 || x >= Main.maxTilesX || y < 0 || y >= Main.maxTilesY)
+                    if (!AvaritiaBreakHelper.InBounds(x, y))
                     {
                         continue;
                     }
-                    Tile tile = Main.tile[x, y];
-                    Tile tileSafely = Framing.GetTileSafely(x, y);
-                    if (tileSafely.HasTile && TileID.Sets.CanBeDugByShovel[tileSafely.TileType])
+                    Tile tile = Framing.GetTileSafely(x, y);
+                    if (tile.HasTile && TileID.Sets.CanBeDugByShovel[tile.TileType])
                     {
-                        WorldGen.KillTile(x, y, noItem: true);
+                        AvaritiaBreakHelper.BreakTile(x, y);
                     }
                     else if (tile.HasTile && !Main.tileAxe[tile.TileType])
                     {
-                        int i = x;
-                        int j = y;
-                        if (tile.TileFrameX % 36 != 0)
+                        //箱子：按左上角定位并先真正清空箱内物品，否则 Chest.DestroyChest 会失败，
+                        //WorldGen.KillTile 就会认为“该格应当存活”，箱子永远打不掉且每次挥动重复取内容。
+                        //内容物与箱子本体都会并入 drops（最终合并成物质团）。
+                        List<Item>? chestLoot = AvaritiaBreakHelper.TakeChestLoot(tile, x, y, processedChests);
+                        if (chestLoot is not null)
                         {
-                            i--;
-                        }
-                        if (tile.TileFrameY % 36 != 0)
-                        {
-                            j--;
-                        }
-                        int chestIndex = Chest.FindChest(i, j);
-                        int chestEmptyIndex = Chest.FindEmptyChest(i, j);
-                        if (chestIndex != -1 && chestEmptyIndex == -1)
-                        {
-                            Item[]? items = TileHelper.ProcessChestMining(tile, i, j, false);
-                            if (items != null)
-                            {
-                                if (Main.netMode != NetmodeID.SinglePlayer)
-                                {
-                                    ModPacket packet = Mod.GetPacket();
-                                    packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                                    packet.Write(i);
-                                    packet.Write(j);
-                                    packet.Send();
-                                }
-                                WorldGen.KillTile(i, j);
-                                drops.AddRange(items.Where(item => item?.type != ItemID.None && item?.stack > 0));
-                            }
+                            drops.AddRange(chestLoot);
                         }
                         else
                         {
-                            object[] parameters = [x, y, tile, 0, 0, 0, 0, false];
-                            typeof(WorldGen).GetMethod("KillTile_GetItemDrops", BindingFlags.NonPublic | BindingFlags.Static)?.Invoke(null, parameters);
-                            if ((int)parameters[3] > 0 && (int)parameters[4] > 0)
+                            if (AvaritiaBreakHelper.TryGetDrop(x, y, tile, out int itemType, out int stack))
                             {
                                 drops.Add(TileID.Sets.Ore[tile.TileType]
-                                    ? new Item((int)parameters[3], (int)parameters[4] * Main.rand.Next(4, 41))
-                                    : new Item((int)parameters[3], (int)parameters[4]));
+                                    ? new Item(itemType, stack * Main.rand.Next(4, 41))
+                                    : new Item(itemType, stack));
                             }
-                            else if (Main.netMode != NetmodeID.SinglePlayer)
-                            {
-                                ModPacket packet = Mod.GetPacket();
-                                packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                                packet.Write(x);
-                                packet.Write(y);
-                                packet.Send();
-                            }
-                            WorldGen.KillTile(x, y, noItem: true);
+                            AvaritiaBreakHelper.BreakTile(x, y);
                         }
                     }
                     WorldGen.KillWall(x, y);
@@ -143,52 +117,12 @@
             NetMessage.SendTileSquare(-1, baseX - 14, baseY - 14, 28, 28);
             if (drops.Count <= 0)
             {
-                return base.CanUseItem(player);
+                return base.UseItem(player);
             }
-            Dictionary<(int type, int prefix), int> merged = [];
-            foreach (Item item in drops)
-            {
-                if (!(item.type > ItemID.None) || item.stack <= 0)
-                {
-                    continue;
-                }
-                (int type, int prefix) key = (item.type, item.prefix);
-                merged.TryAdd(key, 0);
-                merged[key] += item.stack;
-            }
-            List<Item> consolidated = [];
-            foreach (KeyValuePair<(int type, int prefix), int> kv in merged)
-            {
-                Item consolidatedItem = new(kv.Key.type);
-                consolidatedItem.Prefix(kv.Key.prefix);
-                consolidatedItem.stack = kv.Value;
-                consolidated.Add(consolidatedItem);
-            }
-            while (consolidated.Count > 0)
-            {
-                Item clusterItem = new(ModContent.ItemType<MatterCluster>());
-                if (clusterItem.ModItem is MatterCluster cluster)
-                {
-                    cluster.items = [];
-                    cluster.currentTotal = 0;
-                    for (int i = consolidated.Count - 1; i >= 0; i--)
-                    {
-                        Item leftover = cluster.TryAddItem(consolidated[i]);
-                        if (leftover.IsAir || leftover.stack <= 0)
-                        {
-                            consolidated.RemoveAt(i);
-                        }
-                        else
-                        {
-                            consolidated[i] = leftover;
-                        }
-                    }
-                }
-                int index = Item.NewItem(clusterItem.GetSource_DropAsItem(), Main.MouseWorld, clusterItem);
-                NetMessage.SendData(MessageID.SyncItem, -1, -1, null, index, 1f);
-            }
+            //合并后装进物质团（单个上限 4096，装不下的部分才散落）——内容按物品实例保存，多个物质团互不覆盖
+            AvaritiaBreakHelper.SpawnAsClusters(drops, Main.MouseWorld);
             drops.Clear();
-            return base.CanUseItem(player);
+            return base.UseItem(player);
         }
         public override void AddRecipes()
         {

@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.TileEntities
+namespace AvaritiaMod.Content.TileEntities
 {
     public abstract class CraftingTableTileEntity : ModTileEntity
     {
@@ -9,16 +9,7 @@
         public CraftingTableUI? CraftingTableUI { get; set; }
         internal StyleDimension[] Styles { get; private set; } = new StyleDimension[2];
         public static void SendSlotChange(Point16 tilePos, int x, int y, Item item)
-        {
-            ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.SyncSlot);
-            packet.Write(tilePos.X);
-            packet.Write(tilePos.Y);
-            packet.Write((byte)x);
-            packet.Write((byte)y);
-            ItemIO.Send(item, packet, writeStack: true, writeFavorite: true);
-            packet.Send();
-        }
+            => AvaritiaNet.RequestSyncSlot(tilePos, x, y, item);
         protected CraftingTableTileEntity()
         {
             Items = new Item[Size, Size];
@@ -34,6 +25,43 @@
         {
             Tile tile = Main.tile[x, y];
             return tile.HasTile && tile.TileType == TileType;
+        }
+        /// <summary>
+        /// 把一批内容物写入本实体（尺寸以实体为准，源数组更小时补空）。
+        /// </summary>
+        public void ApplyItems(Item[,]? source)
+        {
+            if (Items is null)
+            {
+                return;
+            }
+            int sourceWidth = source?.GetLength(0) ?? 0;
+            int sourceHeight = source?.GetLength(1) ?? 0;
+            for (int x = 0; x < Size; x++)
+            {
+                for (int y = 0; y < Size; y++)
+                {
+                    Items[x, y] = source is not null && x < sourceWidth && y < sourceHeight
+                        ? source[x, y].Clone() ?? new Item()
+                        : new Item();
+                }
+            }
+        }
+        /// <summary>内容物里是否至少有一件物品（用于避免用空数组覆盖已有数据）。</summary>
+        public static bool HasAnyItem(Item[,]? source)
+        {
+            if (source is null)
+            {
+                return false;
+            }
+            foreach (Item entry in source)
+            {
+                if (entry is { IsAir: false, stack: > 0 })
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         public override void SaveData(TagCompound tag)
         {

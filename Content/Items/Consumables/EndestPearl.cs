@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.Items.Consumables
+namespace AvaritiaMod.Content.Items.Consumables
 {
     public sealed class EndestPearl : FrameItem
     {
@@ -50,7 +50,8 @@
             Texture2D? value = FrameTexture?.GetCurrentFrame();
             if (value is null)
             {
-                return false;
+                //没有序列帧时交回原版绘制：返回 false 会让物品在背包里彻底不可见。
+                return true;
             }
             spriteBatch.End();
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.LinearWrap, null, null, null, Main.UIScaleMatrix);

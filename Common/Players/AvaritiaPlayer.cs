@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.Players
+namespace AvaritiaMod.Common.Players
 {
     public sealed class AvaritiaPlayer : ModPlayer
     {
@@ -71,6 +71,24 @@
         /// </summary>
         internal bool SwordOfTheCosmosAttack { get; set; }
         /// <summary>
+        /// 本玩家手持物品的形态，仅用于“其它客户端绘制该玩家的手持物品”。
+        /// <para>形态本身保存在物品实例上（<see cref="AvaritiaModeGlobalItem"/>）；
+        /// 远程玩家的物品实例数据不一定同步到本地，而他们身上唯一会被看到的物品就是手持物，
+        /// 因此按玩家缓存一份最近同步值即可。</para>
+        /// </summary>
+        internal byte HeldItemMode { get; set; }
+        /// <summary>
+        /// 最近一次同步出去的手持实例。用于“玩家换到另一把同款工具”时补发形态——
+        /// 只在切换形态时发包的话，其它客户端会把上一个实例的形态一直沿用下去。
+        /// </summary>
+        internal Item? LastSyncedHeldItem { get; set; }
+        /// <summary>取指定玩家手持的该类型物品实例的形态（类型不匹配时返回 0）。</summary>
+        internal static byte GetItemMode(Player player, int itemType)
+        {
+            Item heldItem = player.HeldItem;
+            return heldItem is not null && heldItem.type == itemType ? AvaritiaModeGlobalItem.GetMode(heldItem) : (byte)0;
+        }
+        /// <summary>
         /// 玩家是否看过第一次穿戴无尽全套的动画
         /// </summary>
         private bool _hasSeenCosmicSphereIntro;
@@ -90,12 +108,12 @@
             CosmicParticles = new CosmicParticle();
             CosmicLightning = new CosmicLightning();
             _lastSuit = false;
-            //向服务端发送玩家星空球体状态
-            if (Main.netMode == NetmodeID.MultiplayerClient)
+            if (Main.netMode != NetmodeID.SinglePlayer)
             {
-                ModPacket packet = Mod.GetPacket();
-                packet.Write((byte)AvaritiaMod.SyncMessageType.RequestCosmicSphereStates);
-                packet.Send();
+                //把手持物品的形态推给服务端（供其它客户端绘制），并拉取其它玩家的形态
+                AvaritiaNet.SendItemMode(AvaritiaModeGlobalItem.GetMode(Player.HeldItem));
+                AvaritiaNet.RequestItemModes();
+                AvaritiaNet.RequestCosmicSphereStates();
             }
         }
         public override void ResetEffects()
@@ -189,6 +207,7 @@
         public override void SaveData(TagCompound tag)
         {
             //保存玩家是否看过动画的数据到玩家数据中
+            //（物品形态存在物品实例上，由 GlobalItem.SaveData 负责，这里不再重复保存）
             tag["HasSeenCosmicSphereIntro"] = _hasSeenCosmicSphereIntro;
         }
         public override void LoadData(TagCompound tag)
@@ -203,16 +222,6 @@
         /// <param name="startTime">宇宙球体开始时间</param>
         /// <param name="timer">计数器</param>
         internal void SendSyncPacket(bool active, int startTime, ushort timer)
-        {
-            ModPacket packet = Mod.GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.RequestCosmicSphere);
-            packet.Write(Player.whoAmI);
-            packet.Write(CosmicSphereSuit);
-            packet.Write(active);
-            packet.Write(startTime);
-            packet.Write(timer);
-            packet.Write(SwordOfTheCosmosAttack);
-            packet.Send();
-        }
+            => AvaritiaNet.RequestCosmicSphere(Player.whoAmI, CosmicSphereSuit, active, startTime, timer, SwordOfTheCosmosAttack);
     }
 }

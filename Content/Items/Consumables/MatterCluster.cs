@@ -1,11 +1,45 @@
-﻿namespace AvaritiaMod.Content.Items.Consumables
+namespace AvaritiaMod.Content.Items.Consumables
 {
+    /// <summary>
+    /// 物质团：把挖掘产物压缩存放，右键（或左键使用）可以倒出全部内容。
+    /// <para>内容物保存在物品实例上（<see cref="MatterClusterGlobalItem"/>），
+    /// 因此同屏多个物质团互不影响，数量也不会“对不上”。</para>
+    /// </summary>
     public sealed class MatterCluster : ModItem
     {
-        internal List<Item> items = [];
-        internal int currentTotal;
-        private List<string> ItemsValue => [.. items.Select(item => item.Name + " x" + item.stack)];
         public override string Texture => "AvaritiaMod/Content/Items/Consumables/MatterCluster1";
+        /// <summary>本实例的内部物品（物品实例数据）。</summary>
+        internal List<Item> items
+        {
+            get => Data?.Items ?? [];
+            set
+            {
+                if (Data is { } data)
+                {
+                    data.Items = value;
+                }
+            }
+        }
+        /// <summary>本实例已保存的物品总数。</summary>
+        internal int currentTotal
+        {
+            get => Data?.CurrentTotal ?? 0;
+            set
+            {
+                if (Data is { } data)
+                {
+                    data.CurrentTotal = value;
+                }
+            }
+        }
+        /// <summary>取当前物品实例的数据。</summary>
+        private MatterClusterGlobalItem? Data => MatterClusterGlobalItem.Get(Item);
+        /// <summary>取背包绘制中的实例数据（PreDrawInInventory 拿不到 Item，由 GlobalItem 提供）。</summary>
+        private MatterClusterGlobalItem? DrawData
+            => MatterClusterGlobalItem.Get(MatterClusterGlobalItem.CurrentDrawItem) ?? Data;
+        /// <summary>取 tooltip 对应实例的数据（优先用鼠标指向的那个物品）。</summary>
+        private MatterClusterGlobalItem? HoverData
+            => MatterClusterGlobalItem.Get(Main.HoverItem?.type == Type ? Main.HoverItem : Item) ?? Data;
         public override void SetDefaults()
         {
             Item.rare = ModContent.RarityType<LightRedRarity>();
@@ -15,10 +49,14 @@
         }
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
+            List<Item> contents = HoverData?.Items ?? [];
+            List<string> values = [.. contents.Select(item => item.Name + " x" + item.stack)];
             foreach (TooltipLine line in tooltips.Where(line => line.Mod == "Terraria"))
             {
-                line.Text = line.Name == "Tooltip0" ? items.Sum(item => item.stack) + "/4096 " + Language.GetTextValue("LegacyInterface.37") : line.Text;
-                if (!Main.keyState.IsKeyDown(Keys.LeftShift) || ItemsValue.Count <= 0)
+                line.Text = line.Name == "Tooltip0"
+                    ? contents.Sum(item => item.stack) + "/" + MatterClusterGlobalItem.Capacity + " " + Language.GetTextValue("LegacyInterface.37")
+                    : line.Text;
+                if (!Main.keyState.IsKeyDown(Keys.LeftShift) || values.Count <= 0)
                 {
                     continue;
                 }
@@ -28,9 +66,9 @@
                     {
                         continue;
                     }
-                    if (ItemsValue.Count > i)
+                    if (values.Count > i)
                     {
-                        line.Text = ItemsValue[i];
+                        line.Text = values[i];
                     }
                     else
                     {
@@ -38,11 +76,11 @@
                     }
                 }
             }
-            if (Main.keyState.IsKeyDown(Keys.LeftShift) && ItemsValue.Count > 2)
+            if (Main.keyState.IsKeyDown(Keys.LeftShift) && values.Count > 2)
             {
-                for (int i = 2; i < ItemsValue.Count; i++)
+                for (int i = 2; i < values.Count; i++)
                 {
-                    TooltipLine newLine = new(Mod, "MatterClusterItem" + i, ItemsValue[i]);
+                    TooltipLine newLine = new(Mod, "MatterClusterItem" + i, values[i]);
                     tooltips.Add(newLine);
                 }
             }
@@ -53,7 +91,7 @@
         }
         public override bool PreDrawInInventory(SpriteBatch spriteBatch, Vector2 position, Rectangle frame, Color drawColor, Color itemColor, Vector2 origin, float scale)
         {
-            if (items.Sum(item => item.stack) < 4096)
+            if ((DrawData?.CurrentTotal ?? 0) < MatterClusterGlobalItem.Capacity)
             {
                 return base.PreDrawInInventory(spriteBatch, position, frame, drawColor, itemColor, origin, scale);
             }
@@ -63,30 +101,21 @@
         }
         public override bool PreDrawInWorld(SpriteBatch spriteBatch, Color lightColor, Color alphaColor, ref float rotation, ref float scale, int whoAmI)
         {
-            if (items.Sum(item => item.stack) < 4096)
+            Item worldItem = whoAmI >= 0 && whoAmI < Main.item.Length ? Main.item[whoAmI] : Item;
+            if ((MatterClusterGlobalItem.Get(worldItem)?.CurrentTotal ?? 0) < MatterClusterGlobalItem.Capacity)
             {
                 return base.PreDrawInWorld(spriteBatch, lightColor, alphaColor, ref rotation, ref scale, whoAmI);
             }
             Texture2D value = ModContent.Request<Texture2D>("AvaritiaMod/Content/Items/Consumables/MatterCluster2").Value;
-            Rectangle frame = value.Frame();
-            Vector2 vector = frame.Size() / 2f;
-            Vector2 vector2 = new(Item.width / 2f - vector.X, Item.height - frame.Height);
-            Vector2 vector3 = Item.position - Main.screenPosition + vector + vector2;
-            spriteBatch.Draw(value, vector3, frame, lightColor, 0f, vector, scale, SpriteEffects.None, 0f);
+            Rectangle worldFrame = value.Frame();
+            Vector2 textureOrigin = worldFrame.Size() / 2f;
+            Vector2 offset = new(worldItem.width / 2f - textureOrigin.X, worldItem.height - worldFrame.Height);
+            Vector2 drawPosition = worldItem.position - Main.screenPosition + textureOrigin + offset;
+            spriteBatch.Draw(value, drawPosition, worldFrame, lightColor, 0f, textureOrigin, scale, SpriteEffects.None, 0f);
             return false;
         }
         public override bool CanRightClick() => true;
-        public override void RightClick(Player player)
-        {
-            if (items.Sum(item => item.stack) > 0)
-            {
-                foreach (Item item in items.Where(item => item.type != ItemID.None))
-                {
-                    player.QuickSpawnItem(item.GetSource_DropAsItem(), item.Clone(), item.stack);
-                }
-            }
-            items = [];
-        }
+        public override void RightClick(Player player) => DumpContents(player);
         public override bool AltFunctionUse(Player player) => true;
         public override bool CanUseItem(Player player)
         {
@@ -94,68 +123,29 @@
             {
                 return false;
             }
-            RightClick(player);
+            DumpContents(player);
             Item.TurnToAir();
             return true;
         }
-        public Item TryAddItem(Item newItem)
+        /// <summary>把内部物品全部倒给玩家并清空。</summary>
+        private void DumpContents(Player player)
         {
-            if (newItem.IsAir)
+            if (Data is not { } data)
             {
-                return new Item();
+                return;
             }
-            int remaining = newItem.stack;
-            foreach (Item existing in items)
+            foreach (Item entry in data.Items.Where(entry => entry is { IsAir: false, stack: > 0 }))
             {
-                if (existing.type != newItem.type || existing.prefix != newItem.prefix)
-                {
-                    continue;
-                }
-                int space = existing.maxStack - existing.stack;
-                if (space <= 0)
-                {
-                    continue;
-                }
-                int take = Math.Min(space, remaining);
-                take = Math.Min(take, 4096 - currentTotal);
-                if (take <= 0)
-                {
-                    continue;
-                }
-                existing.stack += take;
-                remaining -= take;
-                currentTotal += take;
-                if (remaining == 0)
-                {
-                    return new Item();
-                }
+                player.QuickSpawnItem(entry.GetSource_DropAsItem(), entry.Clone(), entry.stack);
             }
-            while (remaining > 0)
-            {
-                int maxStack = newItem.maxStack;
-                int canAdd = Math.Min(remaining, maxStack);
-                canAdd = Math.Min(canAdd, 4096 - currentTotal);
-                if (canAdd <= 0)
-                {
-                    break;
-                }
-                Item newEntry = newItem.Clone();
-                newEntry.stack = canAdd;
-                items.Add(newEntry);
-                remaining -= canAdd;
-                currentTotal += canAdd;
-            }
-            if (remaining <= 0)
-            {
-                return new Item();
-            }
-            Item remainder = newItem.Clone();
-            remainder.stack = remaining;
-            return remainder;
+            data.Items = [];
+            data.CurrentTotal = 0;
         }
+        /// <summary>把一个物品并入本物品实例，返回装不下的剩余部分。</summary>
+        public Item TryAddItem(Item newItem) => MatterClusterGlobalItem.TryAdd(Item, newItem);
         public override bool OnPickup(Player player)
         {
-            if (items.Count == 0 || currentTotal == 0)
+            if (Data is not { } data || data.Items.Count == 0 || data.CurrentTotal == 0)
             {
                 return true;
             }
@@ -167,53 +157,37 @@
                     existingClusters.Add(cluster);
                 }
             }
-            List<Item> itemsToAdd = [.. items];
-            items.Clear();
-            currentTotal = 0;
+            List<Item> pending = [.. data.Items];
+            data.Items = [];
+            data.CurrentTotal = 0;
             foreach (MatterCluster cluster in existingClusters)
             {
-                for (int i = itemsToAdd.Count - 1; i >= 0; i--)
+                for (int i = pending.Count - 1; i >= 0; i--)
                 {
-                    Item leftover = cluster.TryAddItem(itemsToAdd[i]);
+                    Item leftover = cluster.TryAddItem(pending[i]);
                     if (leftover.IsAir || leftover.stack <= 0)
                     {
-                        itemsToAdd.RemoveAt(i);
+                        pending.RemoveAt(i);
                     }
                     else
                     {
-                        itemsToAdd[i] = leftover;
+                        pending[i] = leftover;
                     }
                 }
-                if (itemsToAdd.Count == 0)
+                if (pending.Count == 0)
                 {
                     break;
                 }
             }
-            if (itemsToAdd.Count > 0)
+            if (pending.Count > 0)
             {
-                items = itemsToAdd;
-                currentTotal = items.Sum(item => item.stack);
+                data.Items = pending;
+                data.CurrentTotal = pending.Sum(entry => entry.stack);
                 return true;
             }
             Item.active = false;
             SoundEngine.PlaySound(SoundID.MaxMana);
             return false;
-        }
-        public override void NetSend(BinaryWriter writer)
-        {
-            writer.Write((short)items.Count);
-            foreach (Item item in items)
-            {
-                ItemIO.Send(item, writer, writeStack: true, writeFavorite: true);
-            }
-        }
-        public override void NetReceive(BinaryReader reader)
-        {
-            short count = reader.ReadInt16();
-            for (short i = 0; i < count; i++)
-            {
-                TryAddItem(ItemIO.Receive(reader, readStack: true, readFavorite: true));
-            }
         }
     }
 }

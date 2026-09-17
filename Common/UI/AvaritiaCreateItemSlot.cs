@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 无尽贪婪合成输出槽UI元素
@@ -28,7 +28,7 @@
                 return;
             }
             int maxCount = _cachedRecipe.GetCraftableCount(parent.Slots);
-            Item.stack *= maxCount;
+            Item.stack *= Math.Max(1, maxCount);
         }
         /// <summary>
         /// 处理左键单击逻辑
@@ -36,6 +36,11 @@
         /// <param name="evt"></param>
         public override void LeftClick(UIMouseEvent evt)
         {
+            //面板正在被拖拽时，这一次点击属于拖拽操作（拖拽开始时会丢弃按下缓存），不参与合成。
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                return;
+            }
             if (Parent.Parent is CraftingTableUI parent)
             {
                 if (Main.keyState.IsKeyDown(Keys.LeftShift))
@@ -63,6 +68,10 @@
         /// <param name="evt"></param>
         public override void RightClick(UIMouseEvent evt)
         {
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                return;
+            }
             if (Parent.Parent is CraftingTableUI parent)
             {
                 if (Main.keyState.IsKeyDown(Keys.LeftShift))
@@ -101,7 +110,9 @@
                 return false;
             }
             Item = _cachedRecipe.Result.Clone();
-            int maxCount = _cachedRecipe.GetCraftableCount(parent.Slots);
+            //配方已经匹配就不可能一份都合不出来；这里兜底至少合成一份，
+            //避免数量算成 0 时这一次点击被静默吞掉（什么都不会发生）。
+            int maxCount = Math.Max(1, _cachedRecipe.GetCraftableCount(parent.Slots));
             for (int i = 0; i < maxCount; i++)
             {
                 _cachedRecipe = AvaritiaRecipe.FindMatchingRecipe(parent.Slots);

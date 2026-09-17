@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 工作台UI组件，继承<see cref="DragUIState{T}"/>拥有拖拽功能
@@ -21,6 +21,23 @@
         /// 输入槽UI元素数组
         /// </summary>
         public AvaritiaItemSlot[,]? Slots { get; private set; }
+        /// <summary>
+        /// 当前高亮的配方列表槽位。
+        /// <para>高亮状态必须由面板统一持有，而不是各个配方槽位记在自己身上：
+        /// 槽位只知道自己被点过，点第二个配方时第一个槽位的“我在高亮”标记没人清，
+        /// 表现就是“点一个亮一个，旧的高亮一直不恢复”（原实现即如此）。</para>
+        /// </summary>
+        public AvaritiaRecipeItemSlot? HighlightedRecipeSlot { get; private set; }
+        /// <summary>高亮指定配方列表槽位（同一时刻只允许一个配方处于高亮状态）。</summary>
+        public void HighlightRecipe(AvaritiaRecipeItemSlot slot) => HighlightedRecipeSlot = slot;
+        /// <summary>取消配方高亮（仅当传入的槽位正是当前高亮的那个时才清空）。</summary>
+        public void ClearRecipeHighlight(AvaritiaRecipeItemSlot slot)
+        {
+            if (ReferenceEquals(HighlightedRecipeSlot, slot))
+            {
+                HighlightedRecipeSlot = null;
+            }
+        }
         /// <summary>
         /// 工作台合成槽尺寸
         /// </summary>
@@ -57,6 +74,10 @@
         /// 工作台标题文本
         /// </summary>
         protected virtual string TitleText => string.Empty;
+        /// <summary>
+        /// 直接拖动标题栏即可移动面板（无需按住 Shift，也不会先按到物品槽上）。
+        /// </summary>
+        protected override UIElement? DragHandle => Title;
         /// <summary>
         /// 滚动条视图最小值
         /// </summary>
@@ -209,22 +230,11 @@
         /// </summary>
         private void InitCloseButton()
         {
-            if (Element is null)
-            {
-                return;
-            }
-            UITextPanel<string> close = new(Language.GetTextValue("LegacyMisc.56"));
-            close.Width.Set(100, 0);
-            close.Height.Set(40, 0);
-            close.HAlign = 0.99f;
-            close.VAlign = 0.01f;
-            close.OnLeftClick += (_, _) =>
+            Element?.Append(EternalUI.CreateCloseButton(Language.GetTextValue("LegacyMisc.56"), () =>
             {
                 Visible = false;
                 ModContent.GetInstance<CraftingTableUISystem>().HideUI();
-                SoundEngine.PlaySound(SoundID.MenuClose);
-            };
-            Element.Append(close);
+            }));
         }
         /// <summary>
         /// 初始化配方列表。创建可滚动的 <see cref="UIList"/>，将当前尺寸下所有有效配方

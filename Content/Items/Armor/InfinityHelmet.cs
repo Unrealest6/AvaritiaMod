@@ -25,24 +25,6 @@
             }
             player.statDefense += 960;
             player.lifeRegen += 50;
-            foreach (Projectile projectile in Main.ActiveProjectiles)
-            {
-                if (!projectile.hostile && projectile.friendly ||
-                    !(projectile.Center.Distance(player.Center) <= CosmicSphereSystem.SphereRadius))
-                {
-                    continue;
-                }
-                projectile.velocity *= -1;
-                projectile.friendly = true;
-                projectile.hostile = false;
-            }
-            foreach (NPC npc in Main.ActiveNPCs)
-            {
-                if (!npc.friendly && npc.Center.Distance(player.Center) <= CosmicSphereSystem.SphereRadius)
-                {
-                    npc.velocity *= -1;
-                }
-            }
         }
         public override void AddRecipes()
         {

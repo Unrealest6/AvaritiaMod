@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.TileEntities
+namespace AvaritiaMod.Content.TileEntities
 {
     public sealed class NeutroniumCompressorTileEntity : ModTileEntity
     {
@@ -10,39 +10,11 @@
         internal bool IsWorking { get; private set; }
         private int _processTimer;
         public static void SendInputChange(Point16 tilePos, Item inputItem)
-        {
-            ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.RequestCompressorInput);
-            packet.Write(tilePos.X);
-            packet.Write(tilePos.Y);
-            ItemIO.Send(inputItem, packet, writeStack: true, writeFavorite: true);
-            packet.Send();
-        }
+            => AvaritiaNet.RequestCompressorSlot(tilePos, inputItem, output: false);
         public static void SendOutputChange(Point16 tilePos, Item outputItem)
-        {
-            ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.RequestCompressorOutput);
-            packet.Write(tilePos.X);
-            packet.Write(tilePos.Y);
-            ItemIO.Send(outputItem, packet, writeStack: true, writeFavorite: true);
-            packet.Send();
-        }
+            => AvaritiaNet.RequestCompressorSlot(tilePos, outputItem, output: true);
         public void SendWholeCompressor(int toClient = -1)
-        {
-            ModPacket packet = Mod.GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.BroadcastCompressor);
-            packet.Write(Position.X);
-            packet.Write(Position.Y);
-            NetSend(packet);
-            if (toClient == -1)
-            {
-                packet.Send();
-            }
-            else
-            {
-                packet.Send(toClient);
-            }
-        }
+            => AvaritiaNet.BroadcastTileEntity(this, AvaritiaMod.SyncMessageType.BroadcastCompressor, toClient);
         public override bool IsTileValidForEntity(int x, int y)
         {
             Tile tile = Main.tile[x, y];

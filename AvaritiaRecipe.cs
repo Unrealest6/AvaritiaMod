@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod
+namespace AvaritiaMod
 {
     public sealed class AvaritiaRecipe
     {
@@ -7,12 +7,89 @@
         public static event hook_Register? Hook_Register;
         public static IReadOnlySet<AvaritiaRecipe> Recipes => _recipes;
         private static readonly HashSet<AvaritiaRecipe> _recipes = [];
+        /// <summary>
+        /// 匹配结果缓存。
+        /// </summary>
+        private static int[]? _cachedContents;
+        private static int _cachedDim;
+        private static AvaritiaRecipe? _cachedRecipe;
+        private static bool _cacheValid;
+        public static AvaritiaRecipe? FindMatchingRecipe(AvaritiaItemSlot[,]? slots)
+        {
+            if (slots is null)
+            {
+                return null;
+            }
+            int dim = slots.GetLength(0);
+            if (_cacheValid && _cachedContents is not null && dim == _cachedDim && slots.GetLength(1) == dim
+                && ContentsUnchanged(slots, _cachedContents, dim))
+            {
+                return _cachedRecipe;
+            }
+            byte size = (byte)Math.Sqrt(slots.Length);
+            AvaritiaRecipe? result = null;
+            foreach (AvaritiaRecipe recipe in _recipes)
+            {
+                if (recipe.Size == size && !recipe.Result.IsAir && recipe.Matches(slots))
+                {
+                    result = recipe;
+                    break;
+                }
+            }
+            _cachedContents = SnapshotContents(slots, dim);
+            _cachedDim = dim;
+            _cachedRecipe = result;
+            _cacheValid = true;
+            return result;
+        }
+        /// <summary>清空匹配缓存（配方集合发生变化时调用）。</summary>
+        public static void InvalidateCache()
+        {
+            _cachedContents = null;
+            _cachedRecipe = null;
+            _cacheValid = false;
+        }
+        /// <summary>把槽位内容拍平成 [type, stack] 序列（仅用于缓存比较）。</summary>
+        private static int[] SnapshotContents(AvaritiaItemSlot[,] slots, int dim)
+        {
+            int[] contents = new int[dim * slots.GetLength(1) * 2];
+            int index = 0;
+            for (int x = 0; x < dim; x++)
+            {
+                for (int y = 0; y < slots.GetLength(1); y++)
+                {
+                    Item item = slots[x, y].Item;
+                    contents[index++] = item.type;
+                    contents[index++] = item.stack;
+                }
+            }
+            return contents;
+        }
+        /// <summary>逐格比较槽位内容是否与快照一致（配方只关心物品类型与堆叠数）。</summary>
+        private static bool ContentsUnchanged(AvaritiaItemSlot[,] slots, int[] snapshot, int dim)
+        {
+            if (slots.GetLength(1) != dim || snapshot.Length != dim * dim * 2)
+            {
+                return false;
+            }
+            int index = 0;
+            for (int x = 0; x < dim; x++)
+            {
+                for (int y = 0; y < dim; y++)
+                {
+                    Item item = slots[x, y].Item;
+                    if (snapshot[index++] != item.type || snapshot[index++] != item.stack)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
         public BoundedSize Size { get; }
         public Item Result { get; }
         public bool IsOrdered { get; }
         private List<Item>[,] _ingredients;
-        public static AvaritiaRecipe? FindMatchingRecipe(AvaritiaItemSlot[,]? slots) => slots is null ? null
-            : _recipes.FirstOrDefault(r => r.Size == (byte)Math.Sqrt(slots.Length) && !r.Result.IsAir && r.Matches(slots));
         public AvaritiaRecipe(int type, BoundedSize size, int stack = 1, bool isOrdered = true)
         {
             Item item = new(type, stack);
@@ -37,6 +114,8 @@
                     return null;
                 }
                 _recipes.Add(this);
+                //配方集合变了，之前缓存的“匹配结果”可能已经不对
+                InvalidateCache();
                 return this;
             };
             return Hook_Register != null ? Hook_Register(register, this) : register.Invoke(this);
@@ -137,7 +216,29 @@
         public bool Matches(AvaritiaItemSlot[,]? slots) => IsOrdered ? MatchesOrdered(slots) : MatchesUnordered(slots);
         public int GetCraftableCount(AvaritiaItemSlot[,]? slots)
         {
-            if (slots is null || !Matches(slots))
+            if (slots is null)
+            {
+                return 0;
+            }
+            //可合成数量也按“槽位内容快照”缓存：无序配方要跑一次回溯搜索，
+            //而按住 Shift 时这个方法每帧都会被调用。
+            int dim = slots.GetLength(0);
+            if (_countContents is not null && dim == _countDim && ContentsUnchanged(slots, _countContents, dim))
+            {
+                return _cachedCraftCount;
+            }
+            int count = CalculateCraftableCount(slots);
+            _countContents = SnapshotContents(slots, dim);
+            _countDim = dim;
+            _cachedCraftCount = count;
+            return count;
+        }
+        private int[]? _countContents;
+        private int _countDim;
+        private int _cachedCraftCount;
+        private int CalculateCraftableCount(AvaritiaItemSlot[,] slots)
+        {
+            if (!Matches(slots))
             {
                 return 0;
             }

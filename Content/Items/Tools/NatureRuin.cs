@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.Items.Tools
+namespace AvaritiaMod.Content.Items.Tools
 {
     public sealed class NatureRuin : ModItem
     {
@@ -47,170 +47,112 @@
             return false;
         }
         public override bool AltFunctionUse(Player player) => true;
+        /// <summary>破坏一整条藤蔓：向下与向上都要处理，而且每次访问方块前必须做边界检查。
+        /// </summary>
+        private void BreakVineColumn(int x, int y, List<Point16>? pendingBreaks)
+        {
+            for (int vineY = y; AvaritiaBreakHelper.InBounds(x, vineY) && IsVineTile(Framing.GetTileSafely(x, vineY).TileType); vineY++)
+            {
+                BreakTileBatched(x, vineY, pendingBreaks);
+            }
+            for (int vineY = y - 1; AvaritiaBreakHelper.InBounds(x, vineY) && IsVineTile(Framing.GetTileSafely(x, vineY).TileType); vineY--)
+            {
+                BreakTileBatched(x, vineY, pendingBreaks);
+            }
+        }
+        /// <summary>
+        /// 破坏一格：本地立即执行以保证手感，多人客户端把坐标收集起来稍后<b>一次性</b>发给服务端。
+        /// </summary>
+        private static void BreakTileBatched(int x, int y, List<Point16>? pendingBreaks)
+        {
+            if (!AvaritiaBreakHelper.InBounds(x, y))
+            {
+                return;
+            }
+            pendingBreaks?.Add(new Point16(x, y));
+            WorldGen.KillTile(x, y, noItem: true);
+        }
+        /// <summary>把同步区域裁剪到世界范围内再发送（贴边挖掘时原实现会发出越界矩形）。</summary>
+        private static void SyncArea(int left, int top, int width, int height)
+        {
+            int minX = Math.Max(0, left);
+            int minY = Math.Max(0, top);
+            int maxX = Math.Min(Main.maxTilesX - 1, left + width - 1);
+            int maxY = Math.Min(Main.maxTilesY - 1, top + height - 1);
+            if (maxX < minX || maxY < minY)
+            {
+                return;
+            }
+            NetMessage.SendTileSquare(-1, minX, minY, maxX - minX + 1, maxY - minY + 1);
+        }
         public override bool CanUseItem(Player player)
         {
+            int baseX = (int)(Main.MouseWorld.X / 16);
+            int baseY = (int)(Main.MouseWorld.Y / 16);
             if (!(Main.MouseWorld.X < player.Center.X + Player.tileRangeX * 16) ||
                 !(Main.MouseWorld.Y < player.Center.Y + Player.tileRangeY * 16) ||
                 !(Main.MouseWorld.X > player.Center.X - Player.tileRangeX * 16) ||
                 !(Main.MouseWorld.Y > player.Center.Y - Player.tileRangeY * 16) ||
-                !Main.tile[(int)Main.MouseWorld.X / 16, (int)Main.MouseWorld.Y / 16].HasTile || player.altFunctionUse != 2 || !Main.keyState.IsKeyDown(Keys.LeftShift))
+                //鼠标可能在世界外：必须先做边界检查再取方块，原实现的直接索引会越界
+                !AvaritiaBreakHelper.InBounds(baseX, baseY) ||
+                !Framing.GetTileSafely(baseX, baseY).HasTile ||
+                player.altFunctionUse != 2 || !Main.keyState.IsKeyDown(Keys.LeftShift))
             {
                 return base.CanUseItem(player);
             }
             List<Item> drops = [];
-            int baseX = (int)(Main.MouseWorld.X / 16);
-            int baseY = (int)(Main.MouseWorld.Y / 16);
-            Type worldGenType = typeof(WorldGen);
-            MethodInfo? killTileGetItemDrops = worldGenType.GetMethod("KillTile_GetItemDrops", BindingFlags.NonPublic | BindingFlags.Static);
-            object[] parameters = new object[8];
+            //多人客户端：整片挖掘的破坏坐标先收集，循环结束后合并成少量批量包发出
+            List<Point16>? pendingBreaks = Main.netMode == NetmodeID.MultiplayerClient ? [] : null;
             for (int dx = -14; dx < 14; dx++)
             {
                 for (int dy = -28; dy < 28; dy++)
                 {
                     int x = baseX + dx;
                     int y = baseY + dy;
-                    if (x < 0 || x >= Main.maxTilesX || y < 0 || y >= Main.maxTilesY)
+                    if (!AvaritiaBreakHelper.InBounds(x, y))
                     {
                         continue;
                     }
-                    Tile tile = Main.tile[x, y];
+                    Tile tile = Framing.GetTileSafely(x, y);
                     if (!tile.HasTile)
                     {
                         continue;
                     }
                     if (Main.tileAxe[tile.TileType])
                     {
-                        parameters[0] = x;
-                        parameters[1] = y;
-                        parameters[2] = tile;
-                        parameters[3] = 0;
-                        parameters[4] = 0;
-                        parameters[5] = 0;
-                        parameters[6] = 0;
-                        parameters[7] = false;
-                        killTileGetItemDrops?.Invoke(null, parameters);
-                        if ((int)parameters[3] > 0 && (int)parameters[4] > 0)
+                        if (AvaritiaBreakHelper.TryGetDrop(x, y, tile, out int itemType, out int stack))
                         {
-                            drops.Add(new Item((int)parameters[3], (int)parameters[4]));
+                            drops.Add(new Item(itemType, stack));
                         }
-                        if (Main.netMode != NetmodeID.SinglePlayer)
-                        {
-                            ModPacket packet = Mod.GetPacket();
-                            packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                            packet.Write(x);
-                            packet.Write(y);
-                            packet.Send();
-                        }
-                        WorldGen.KillTile(x, y, noItem: true);
+                        BreakTileBatched(x, y, pendingBreaks);
                     }
                     else if (IsGrassTile(tile.TileType))
                     {
-                        if (Main.netMode != NetmodeID.SinglePlayer)
-                        {
-                            ModPacket packet = Mod.GetPacket();
-                            packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                            packet.Write(x);
-                            packet.Write(y);
-                            packet.Send();
-                        }
-                        WorldGen.KillTile(x, y, true, noItem: true);
+                        //原实现传的是 fail: true，导致客户端永远打不掉草皮、服务端却会打掉（两端不一致）
+                        BreakTileBatched(x, y, pendingBreaks);
                     }
                     else if (IsPlantTile(tile.TileType))
                     {
-                        if (Main.netMode != NetmodeID.SinglePlayer)
-                        {
-                            ModPacket packet = Mod.GetPacket();
-                            packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                            packet.Write(x);
-                            packet.Write(y);
-                            packet.Send();
-                        }
-                        WorldGen.KillTile(x, y, noItem: true, effectOnly: false);
+                        BreakTileBatched(x, y, pendingBreaks);
                     }
                     else if (IsVineTile(tile.TileType))
                     {
-                        int vineY = y;
-                        while (vineY < Main.maxTilesY && IsVineTile(Main.tile[x, vineY].TileType))
-                        {
-                            if (Main.netMode != NetmodeID.SinglePlayer)
-                            {
-                                ModPacket packet = Mod.GetPacket();
-                                packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                                packet.Write(x);
-                                packet.Write(y);
-                                packet.Send();
-                            }
-                            WorldGen.KillTile(x, vineY, noItem: true, effectOnly: false);
-                            vineY++;
-                        }
-                        vineY = y;
-                        do
-                        {
-                            vineY--;
-                        }
-                        while (vineY < Main.maxTilesY && IsVineTile(Main.tile[x, vineY].TileType));
-                        {
-                            if (Main.netMode != NetmodeID.SinglePlayer)
-                            {
-                                ModPacket packet = Mod.GetPacket();
-                                packet.Write((byte)AvaritiaMod.SyncMessageType.ServerKillTile);
-                                packet.Write(x);
-                                packet.Write(y);
-                                packet.Send();
-                            }
-                            WorldGen.KillTile(x, vineY, noItem: true, effectOnly: false);
-                        }
+                        BreakVineColumn(x, y, pendingBreaks);
                     }
                 }
             }
-            NetMessage.SendTileSquare(-1, baseX - 14, baseY - 28, 28, 56);
+            if (pendingBreaks is { Count: > 0 })
+            {
+                AvaritiaNet.RequestServerKillTiles(pendingBreaks, noItem: true);
+            }
+            SyncArea(baseX - 14, baseY - 28, 28, 56);
             if (drops.Count <= 0)
             {
                 return base.CanUseItem(player);
             }
-            Dictionary<(int type, int prefix), int> merged = [];
-            foreach (Item item in drops)
-            {
-                if (!(item.type > ItemID.None) || item.stack <= 0)
-                {
-                    continue;
-                }
-                (int type, int prefix) key = (item.type, item.prefix);
-                merged.TryAdd(key, 0);
-                merged[key] += item.stack;
-            }
-            List<Item> consolidated = [];
-            foreach (KeyValuePair<(int type, int prefix), int> kv in merged)
-            {
-                Item consolidatedItem = new(kv.Key.type);
-                consolidatedItem.Prefix(kv.Key.prefix);
-                consolidatedItem.stack = kv.Value;
-                consolidated.Add(consolidatedItem);
-            }
-            while (consolidated.Count > 0)
-            {
-                Item clusterItem = new(ModContent.ItemType<MatterCluster>());
-                MatterCluster? cluster = clusterItem.ModItem as MatterCluster;
-                if (cluster != null)
-                {
-                    cluster.items = [];
-                    cluster.currentTotal = 0;
-                    for (int i = consolidated.Count - 1; i >= 0; i--)
-                    {
-                        Item leftover = cluster.TryAddItem(consolidated[i]);
-                        if (leftover.IsAir || leftover.stack <= 0)
-                        {
-                            consolidated.RemoveAt(i);
-                        }
-                        else
-                        {
-                            consolidated[i] = leftover;
-                        }
-                    }
-                }
-                int index = Item.NewItem(clusterItem.GetSource_DropAsItem(), Main.MouseWorld, clusterItem);
-                NetMessage.SendData(MessageID.SyncItem, -1, -1, null, index, 1f);
-            }
+            //合并（按类型 + 前缀）后装入物质团：与 WorldBreaker / PlanetEater 共用同一实现，
+            //不再各自维护一份容易失配的合并逻辑。
+            AvaritiaBreakHelper.SpawnAsClusters(drops, Main.MouseWorld);
             drops.Clear();
             return base.CanUseItem(player);
         }

@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.TileEntities
+namespace AvaritiaMod.Content.TileEntities
 {
     public sealed class NeutronCollectorTileEntity : ModTileEntity
     {
@@ -7,31 +7,14 @@
         internal StyleDimension[] Styles { get; set; } = new StyleDimension[2];
         internal Item OutputItem { get; set; } = new();
         internal bool IsWorking { get; private set; }
+        /// <summary>距离下一次周期性进度同步还剩多少 tick。</summary>
+        private int _syncCooldown;
+        private int _lastSyncedType = -1;
+        private int _lastSyncedStack = -1;
         public static void SendOutputChange(Point16 tilePos, Item outputItem)
-        {
-            ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.RequestCollectorOutput);
-            packet.Write(tilePos.X);
-            packet.Write(tilePos.Y);
-            ItemIO.Send(outputItem, packet, writeStack: true, writeFavorite: true);
-            packet.Send();
-        }
+            => AvaritiaNet.RequestCollectorOutput(tilePos, outputItem);
         public void SendWholeCollector(int toClient = -1)
-        {
-            ModPacket packet = Mod.GetPacket();
-            packet.Write((byte)AvaritiaMod.SyncMessageType.BroadcastCollector);
-            packet.Write(Position.X);
-            packet.Write(Position.Y);
-            NetSend(packet);
-            if (toClient == -1)
-            {
-                packet.Send();
-            }
-            else
-            {
-                packet.Send(toClient);
-            }
-        }
+            => AvaritiaNet.BroadcastTileEntity(this, AvaritiaMod.SyncMessageType.BroadcastCollector, toClient);
         public override bool IsTileValidForEntity(int x, int y)
         {
             Tile tile = Main.tile[x, y];
@@ -45,7 +28,17 @@
             }
             if (Main.netMode == NetmodeID.Server)
             {
-                SendWholeCollector();
+                //原实现每 tick 都向所有客户端广播一份完整实体状态（每秒 60 个包）。
+                //改成“物品变化时立即同步 + 其余情况每 30 tick 同步一次进度”。
+                _syncCooldown--;
+                bool itemChanged = OutputItem.type != _lastSyncedType || OutputItem.stack != _lastSyncedStack;
+                if (itemChanged || _syncCooldown <= 0)
+                {
+                    _lastSyncedType = OutputItem.type;
+                    _lastSyncedStack = OutputItem.stack;
+                    _syncCooldown = 30;
+                    SendWholeCollector();
+                }
             }
             IsWorking = OutputItem.IsAir || OutputItem.stack < OutputItem.maxStack;
             if (!IsWorking)
@@ -83,7 +76,7 @@
             {
                 OutputItem = new Item();
             }
-            ProcessTimer = tag.ContainsKey("NeutronCollectorTileEntityProcessTimer") ? tag.Get<int>("NeutroniumBlockTileEntityProcessTimer") : 0;
+            ProcessTimer = tag.ContainsKey("NeutronCollectorTileEntityProcessTimer") ? tag.Get<int>("NeutronCollectorTileEntityProcessTimer") : 0;
         }
         public override void NetSend(BinaryWriter writer)
         {

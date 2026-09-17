@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 无尽贪婪合成输入槽UI元素
@@ -83,6 +83,12 @@
                 }
             }
             DragManager.JustReleased = false;
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                //玩家正在拖动整个界面：取消槽位拖拽并且不做任何分堆处理。
+                DragManager.CancelActiveDrag();
+                return;
+            }
             if (DragManager.IsDragging && IsMouseHovering)
             {
                 DragManager.OnSlotHovered(this);
@@ -203,6 +209,10 @@
         public override void LeftMouseDown(UIMouseEvent evt)
         {
             base.LeftMouseDown(evt);
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                return;
+            }
             if (DragManager.IsDragging && DragManager.StartType == DragManager.DragType.Right)
             {
                 DragManager.RollbackDrag();
@@ -221,6 +231,10 @@
         public override void RightMouseDown(UIMouseEvent evt)
         {
             base.RightMouseDown(evt);
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                return;
+            }
             if (DragManager.IsDragging && DragManager.StartType == DragManager.DragType.Left)
             {
                 DragManager.RollbackDrag();
@@ -295,6 +309,10 @@
         public override void MouseOver(UIMouseEvent evt)
         {
             base.MouseOver(evt);
+            if (DragUISession.IsAnyPanelDragging)
+            {
+                return;
+            }
             if (DragManager.StartSlot != null)
             {
                 DragManager.OnSlotHovered(this);

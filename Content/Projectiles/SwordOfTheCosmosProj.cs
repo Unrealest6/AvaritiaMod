@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Content.Projectiles
+namespace AvaritiaMod.Content.Projectiles
 {
     public sealed class SwordOfTheCosmosProj : ModProjectile
     {
@@ -434,10 +434,8 @@
                 }
                 if (Main.netMode == NetmodeID.MultiplayerClient && Projectile.owner == Main.myPlayer)
                 {
-                    ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();
-                    packet.Write((byte)AvaritiaMod.SyncMessageType.RequestKillNPC);
-                    packet.Write(target.whoAmI);
-                    packet.Send();
+                    //由服务端执行掉落并广播击杀（AvaritiaNet.RequestKillNPC 内部只在多人客户端发包）
+                    AvaritiaNet.RequestKillNPC(target.whoAmI);
                 }
             }
         }
