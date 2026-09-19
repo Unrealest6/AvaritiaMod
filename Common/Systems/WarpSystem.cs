@@ -34,10 +34,8 @@ namespace AvaritiaMod.Common.Systems
         }
         public override void Unload()
         {
-            //释放hook及其他资源
             On_FilterManager.EndCapture -= OnFilterManagerEndCapture;
-            //静态 Effect / 参数句柄必须在 Unload 清空：模组重载后旧的 Effect 已随资源一起失效，
-            //留下非 null 的引用会让下一次绘制去提交一个已经释放的效果。
+            //静态 Effect / 参数句柄必须在 Unload 清空，否则模组重载后仍会提交已失效的效果。
             KExEffect = null;
             KScreen0Effect = null;
             _screenPass = null;
@@ -53,11 +51,11 @@ namespace AvaritiaMod.Common.Systems
         }
         public override void PostSetupContent()
         {
+            //专用服务端没有 GraphicsDevice，无法加载 Effect
             if (Main.dedServ)
             {
                 return;
             }
-            //加载着色器
             KExEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/KEx", AssetRequestMode.ImmediateLoad).Value;
             KScreen0Effect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/KScreen0", AssetRequestMode.ImmediateLoad).Value;
             _screenPass = KScreen0Effect?.CurrentTechnique is { Passes.Count: > 0 } technique ? technique.Passes[0] : null;
@@ -82,14 +80,14 @@ namespace AvaritiaMod.Common.Systems
         }
         private void OnFilterManagerEndCapture(On_FilterManager.orig_EndCapture orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Color clearColor)
         {
-            //服务端不绘制任何东西（原实现没有这层保护，一旦钩子被调用就会碰 Main.spriteBatch）
+            //服务端或着色器未就绪时直接交还原版，下面会触碰 Main.spriteBatch
             if (Main.dedServ || _screenPass is null || _screenTextureParam is null || _screenIntensityParam is null)
             {
                 orig(self, finalTexture, screenTarget1, screenTarget2, clearColor);
                 return;
             }
             GraphicsDevice gd = Main.instance.GraphicsDevice;
-            //进行屏幕后处理扭曲绘制处理
+            //屏幕后处理：把扭曲图层按强度混合回主画面
             if (HasActiveWarp() && !screenTarget1.IsDisposed)
             {
                 EnsureRT(gd);
@@ -111,8 +109,7 @@ namespace AvaritiaMod.Common.Systems
                 Main.spriteBatch.End();
                 gd.SetRenderTarget(Main.screenTarget);
                 gd.Clear(Color.Black);
-                //参数必须在通道 Apply 之前写好：原实现先 Apply 再写 tex0/i，
-                //这一帧提交到设备的仍是上一帧（首次绘制则是默认）的参数。
+                //参数必须在通道 Apply 之前写好，否则本帧提交到设备的仍是上一帧的参数
                 _screenTextureParam.SetValue(_warpRT);
                 _screenIntensityParam.SetValue(0.02f);
                 Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
@@ -123,7 +120,7 @@ namespace AvaritiaMod.Common.Systems
             orig(self, finalTexture, screenTarget1, screenTarget2, clearColor);
         }
         /// <summary>
-        /// 是否存在需要扭曲的剑：一次遍历得出结论（原实现用 LINQ <c>Any</c> 扫一遍、再 <c>foreach</c> 扫一遍）。
+        /// 是否存在需要扭曲的剑；单次遍历即得出结论
         /// </summary>
         private static bool HasActiveWarp()
         {
@@ -137,7 +134,7 @@ namespace AvaritiaMod.Common.Systems
             return false;
         }
         /// <summary>
-        /// 确保RT能够正常使用
+        /// 确保两个 RT 的尺寸与当前屏幕一致，不一致则重建
         /// </summary>
         /// <param name="graphicsDevice">图形设备实例</param>
         private void EnsureRT(GraphicsDevice graphicsDevice)

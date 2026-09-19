@@ -14,7 +14,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         private readonly AvaritiaRecipe _recipe;
         /// <summary>
-        /// 配方尺寸
+        /// 配方尺寸（边长，单位：槽位）
         /// </summary>
         private readonly BoundedSize _size;
         /// <summary>
@@ -22,14 +22,13 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         private CraftingTableUI? _owner;
         /// <summary>
-        /// 所属工作台界面。高亮状态由它统一持有，这样点击新配方时旧配方会自动失去高亮。
+        /// 所属工作台界面；高亮状态由它统一持有。
         /// </summary>
         private CraftingTableUI? Owner => _owner ??= Parent?.Parent?.Parent?.Parent as CraftingTableUI;
         /// <summary>
-        /// 扫描玩家背包的前 50 个物品栏，统计每种物品的总数量及其在背包中的索引队列。
-        /// 用于后续自动分配合成材料时快速查找和扣除物品。
+        /// 统计背包前 50 格中每种物品的总量与所在格索引队列，供自动分配材料时查找和扣除。
         /// </summary>
-        /// <returns>字典，键为物品类型 ID，值为该物品的总数量和对应的背包索引队列。</returns>
+        /// <returns>键为物品类型 ID，值为总量与索引队列。</returns>
         private static Dictionary<int, (int total, Queue<int> indices)> ScanBackpack()
         {
             Dictionary<int, (int total, Queue<int> indices)> result = [];
@@ -51,12 +50,11 @@ namespace AvaritiaMod.Common.UI
             return result;
         }
         /// <summary>
-        /// 为每个配方槽位选择一种材料类型，使得在材料限制下能够合成的份数最多。
-        /// 通过二分搜索最大可合成份数 K，并调用 <see cref="TryAllocate"/> 验证可行性。
+        /// 二分搜索最大可合成份数 K，用 <see cref="TryAllocate"/> 验证可行性，并为每个槽位选一种材料类型。
         /// </summary>
-        /// <param name="slotOptions">每个槽位可接受的材料选项列表，每项包含类型、单份需求和最大堆叠。</param>
-        /// <param name="available">当前可用的材料总量，键为物品类型 ID，值为总数量。</param>
-        /// <returns>成功时返回每个槽位分配的材料类型数组；若无法分配则返回 null。</returns>
+        /// <param name="slotOptions">每个槽位的可选材料（类型、单份需求、最大堆叠）。</param>
+        /// <param name="available">可用材料总量，键为物品类型 ID。</param>
+        /// <returns>各槽位分配的材料类型数组；无法分配时为 null。</returns>
         private static int[]? FindBestAssignment(List<List<(int type, int need, int maxStack)>> slotOptions, IReadOnlyDictionary<int, int> available)
         {
             int slotCount = slotOptions.Count;
@@ -106,15 +104,14 @@ namespace AvaritiaMod.Common.UI
             return bestAssignment;
         }
         /// <summary>
-        /// 在给定目标合成份数 K 下，尝试为每个槽位分配一种材料。
-        /// 采用贪心策略：优先处理可选材料较少的槽位，并选择使各材料剩余容量比例最均衡的选项。
+        /// 目标份数 K 下的贪心分配：先处理选项少的槽位，并优先选使各材料剩余容量比例最均衡的选项。
         /// </summary>
-        /// <param name="slotOptions">每个槽位可接受的材料选项列表。</param>
-        /// <param name="typeList">所有涉及的材料类型列表（去重）。</param>
-        /// <param name="available">材料总量字典。</param>
+        /// <param name="slotOptions">每个槽位的可选材料。</param>
+        /// <param name="typeList">涉及的材料类型（去重）。</param>
+        /// <param name="available">材料总量。</param>
         /// <param name="K">目标合成份数。</param>
-        /// <param name="sortedIndices">按槽位选项数量升序排列的槽位索引数组。</param>
-        /// <returns>成功时返回每个槽位分配的材料类型数组；若无法分配则返回 null。</returns>
+        /// <param name="sortedIndices">按选项数量升序排列的槽位索引。</param>
+        /// <returns>各槽位分配的材料类型数组；无法分配时为 null。</returns>
         private static int[]? TryAllocate(List<List<(int type, int need, int maxStack)>> slotOptions, List<int> typeList, IReadOnlyDictionary<int, int> available, long K, int[] sortedIndices)
         {
             int slotCount = slotOptions.Count;
@@ -176,12 +173,11 @@ namespace AvaritiaMod.Common.UI
             return assignment;
         }
         /// <summary>
-        /// 从物品列表中取出指定数量的物品。优先从单个堆叠中扣除；若不足，则合并多个堆叠。
-        /// 取出的物品以新的 <see cref="Item"/> 实例返回，同时更新源列表。
+        /// 从列表中取出指定数量：优先扣单个堆叠，不足时合并多个堆叠，并同步更新源列表。
         /// </summary>
         /// <param name="source">物品来源列表。</param>
         /// <param name="amount">需要取出的数量。</param>
-        /// <returns>取出的物品实例；若无法取出足够数量则返回 null。</returns>
+        /// <returns>取出的新 <see cref="Item"/>；数量不足时为 null。</returns>
         private static Item? TakeFromList(List<Item> source, int amount)
         {
             if (source.Count == 0)
@@ -239,8 +235,7 @@ namespace AvaritiaMod.Common.UI
             return result;
         }
         /// <summary>
-        /// 将物品安全地放回玩家背包。优先合并到已有的相同堆叠中，其次寻找空位放入，
-        /// 若背包已满则直接在玩家位置生成掉落物。
+        /// 放回背包：优先合并到同类堆叠，其次放入空格，背包已满时在玩家位置生成掉落物。
         /// </summary>
         /// <param name="item">要放回的物品实例。</param>
         private static void SafeReturnToInventory(Item item)
@@ -298,7 +293,7 @@ namespace AvaritiaMod.Common.UI
             }
         }
         /// <summary>
-        /// 构造方法，初始化配方结果槽位，绑定指定的配方并设置 UI 尺寸。
+        /// 初始化结果槽位，绑定配方并设置 UI 尺寸。
         /// </summary>
         /// <param name="recipe">该槽位对应的合成配方。</param>
         public AvaritiaRecipeItemSlot(AvaritiaRecipe recipe)
@@ -310,7 +305,7 @@ namespace AvaritiaMod.Common.UI
             Height.Set(72, 0f);
         }
         /// <summary>
-        /// 绘制槽位背景和结果物品。若鼠标悬停则显示物品提示；若当前配方被高亮则使用高亮背景和放大效果。
+        /// 绘制背景与结果物品；悬停时显示物品提示，被高亮时改用高亮背景并放大。
         /// </summary>
         /// <param name="spriteBatch">用于绘制的 SpriteBatch 实例。</param>
         protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -327,8 +322,7 @@ namespace AvaritiaMod.Common.UI
             AvaritiaUIUtils.DrawItemSlot(spriteBatch, _resultItem, rect.TopLeft(), bg, itemColor: tint, scale: isHighlighted ? 1.4f : 1.2f);
         }
         /// <summary>
-        /// 处理左键单击：高亮当前配方（并自动取消上一个高亮），
-        /// 并在合成台各槽位中显示该配方所需的材料列表。
+        /// 左键高亮该配方（并自动取消上一个高亮），同时在合成台各槽位显示所需材料。
         /// </summary>
         /// <param name="evt">鼠标事件参数。</param>
         public override void LeftClick(UIMouseEvent evt)
@@ -354,7 +348,7 @@ namespace AvaritiaMod.Common.UI
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
         /// <summary>
-        /// 处理右键单击：若当前配方已高亮，则取消高亮并清除各槽位显示的材料列表。
+        /// 右键取消高亮并清空各槽位显示的材料列表（仅当本槽位正是高亮项时生效）。
         /// </summary>
         /// <param name="evt">鼠标事件参数。</param>
         public override void RightClick(UIMouseEvent evt)
@@ -375,7 +369,7 @@ namespace AvaritiaMod.Common.UI
             SoundEngine.PlaySound(SoundID.MenuTick);
         }
         /// <summary>
-        /// 处理左键双击：扫描背包，自动将配方所需的材料分配到合成台槽位中，并刷新配方列表。
+        /// 左键双击：扫描背包，把配方所需材料自动分配到合成台各槽位，然后刷新配方列表。
         /// </summary>
         /// <param name="evt">鼠标事件参数。</param>
         public override void LeftDoubleClick(UIMouseEvent evt)
@@ -383,12 +377,15 @@ namespace AvaritiaMod.Common.UI
             base.LeftDoubleClick(evt);
             Dictionary<int, (int total, Queue<int> indices)> backpack = ScanBackpack();
             DistributeIngredients(backpack);
+            //自动填装直接改动了槽位（也改动了背包），立刻把槽位写回实体 / 服务端
+            if (Owner is { } parent && parent.Slots is not null)
+            {
+                AvaritiaItemSlot.SyncSlotsOfParent(parent);
+            }
             Recipe.FindRecipes();
         }
         /// <summary>
-        /// 核心自动分配逻辑。收集合成台现有物品和背包中配方需要的材料，构建每个槽位的可选材料列表，
-        /// 调用 <see cref="FindBestAssignment"/> 计算最佳分配方案，然后按最大可合成份数将材料分配到各槽位，
-        /// 最后将剩余材料安全退回背包。
+        /// 汇总槽位与背包中配方所需的材料，用 <see cref="FindBestAssignment"/> 求最佳分配，按最大可合成份数放入槽位，余料退回背包。
         /// </summary>
         /// <param name="backpack">已扫描的背包物品统计信息。</param>
         private void DistributeIngredients(Dictionary<int, (int total, Queue<int> indices)> backpack)
@@ -627,13 +624,12 @@ namespace AvaritiaMod.Common.UI
             }
         }
         /// <summary>
-        /// 将单一类型的材料按需求比例分配到多个槽位。分配时受每个槽位的最大堆叠限制，
-        /// 并从提供的物品池中取出对应数量的物品放入槽位。
+        /// 把单一类型材料按各槽位需求比例分配（受槽位最大堆叠限制），并从物品池取物放入槽位。
         /// </summary>
         /// <param name="type">材料类型 ID。</param>
-        /// <param name="positions">需要该材料的槽位列表，包含坐标、单份需求和最大堆叠。</param>
-        /// <param name="totalAvailable">该材料的总可用数量。</param>
-        /// <param name="pool">该材料的物品池，用于实际取出物品。</param>
+        /// <param name="positions">需要该材料的槽位（坐标、单份需求、最大堆叠）。</param>
+        /// <param name="totalAvailable">该材料可用总量。</param>
+        /// <param name="pool">该材料的物品池。</param>
         private void SmartDistributeSingleType(int type, List<(int x, int y, int need, int maxStack)> positions, int totalAvailable, List<Item> pool)
         {
             if (Owner is not { } parent)

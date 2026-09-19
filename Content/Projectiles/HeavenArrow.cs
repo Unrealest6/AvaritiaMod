@@ -26,8 +26,7 @@ namespace AvaritiaMod.Content.Projectiles
             {
                 return;
             }
-            //原先这里每 tick 无条件 netUpdate = true（等于每帧一个完整的弹幕同步包）。
-            //现在只由拥有者发包，而且只在“本地随机的速度需要同步”或“螺旋阶段定期纠偏”时下发。
+            //只由拥有者按需发包：本地随机速度需要同步、螺旋阶段需要定期纠偏时才下发。
             bool ownerIsLocal = Projectile.owner == Main.myPlayer;
             Player player = Main.player[Projectile.owner];
             if (MarkCenter is not null)
@@ -52,8 +51,7 @@ namespace AvaritiaMod.Content.Projectiles
                 Projectile.position += Projectile.velocity;
                 if (ownerIsLocal && Projectile.timeLeft % 3 == 0)
                 {
-                    //螺旋轨迹由已同步的 MarkCenter 与位置推导，其它客户端可以自己算，
-                    //因此只需要定期纠偏，不必每 tick 同步。
+                    //螺旋轨迹可由已同步的 MarkCenter 与位置推导，定期纠偏即可，无需每 tick 同步。
                     Projectile.netUpdate = true;
                 }
                 if (Projectile.timeLeft > 300 || !Main.rand.NextBool(2))
@@ -66,7 +64,9 @@ namespace AvaritiaMod.Content.Projectiles
                 dust.noGravity = true;
                 return;
             }
-            if (IsTrack && Main.npc.Where(npc1 => npc1.active && npc1 is { immortal: false, friendly: false, lifeMax: > 1 } && npc1.DistanceSQ(player.Center) < 1048576).GetRecent(Projectile, 512) is { } npc)
+            if (IsTrack && Main.npc.GetNearest(Projectile.Center,
+                    npc1 => npc1 is { immortal: false, friendly: false, lifeMax: > 1 } && npc1.DistanceSQ(player.Center) < 1048576,
+                    512) is { } npc)
             {
                 Projectile.velocity = Vector2.Lerp(Projectile.velocity, (npc.Center - Projectile.Center) / 16f, 0.15f);
             }
@@ -163,7 +163,7 @@ namespace AvaritiaMod.Content.Projectiles
                 Projectile projectile = Projectile.NewProjectileDirect(Projectile.GetSource_Death(), Projectile.position - new Vector2(Main.rand.NextFloat(-128f, 128f), 720f),
                     new Vector2(Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(32f, 48f)), Type, Projectile.damage, Projectile.knockBack, Projectile.owner);
                 projectile.timeLeft += Main.rand.Next(0, 33);
-                //同步“被随机加长的存活时间”：原实现写的是 Projectile.netUpdate（正在死亡的父弹幕），等于什么都没同步。
+                //同步这里随机加长的存活时间（必须写在新生成的弹幕上）。
                 projectile.netUpdate = true;
             }
         }

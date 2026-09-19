@@ -10,12 +10,6 @@ namespace AvaritiaMod.Content.Tiles
         protected virtual int CoordinatePadding => 2;
         protected virtual int DrawYOffset => 2;
         protected virtual bool IsSolid => true;
-        /// <summary>
-        /// 放置端暂存的内容物（按方块坐标）。
-        /// <para>多人客户端放置时本地实体还没建立，只能先记下来，等首次右键（实体就绪）时补写；
-        /// 用按坐标的字典而不是 ModTile 单例字段，避免“右键任意工作台套用上一次内容”的隐患。</para>
-        /// </summary>
-        private static readonly Dictionary<Point16, Item[,]> PendingItems = [];
         public override void SetStaticDefaults()
         {
             Main.tileFrameImportant[Type] = true;
@@ -52,18 +46,15 @@ namespace AvaritiaMod.Content.Tiles
             {
                 return false;
             }
-            //放置端暂存的内容物：多人客户端放置时本地还没有实体（PlaceEntityNet 只是向服务端发请求），
-            //所以那时写不进去，这里在实体就绪后补写一次，并且只补一次。
+            //补写放置端暂存的内容物：多人客户端放置时实体尚未建立，只能等实体就绪后补一次。
             Point16 clickPos = new(i, j);
-            bool appliedPending = PendingItems.Remove(tileEntity.Position, out Item[,]? pending)
-                                  || PendingItems.Remove(clickPos, out pending);
+            bool appliedPending = CraftingTablePending.TryTake(tileEntity.Position, out Item[,]? pending)
+                                  || CraftingTablePending.TryTake(clickPos, out pending);
             if (appliedPending)
             {
                 tileEntity.ApplyItems(pending);
             }
-            //多人：再向服务端要一次最新内容物，覆盖“后加入的客户端 / 数据过期”的情况；
-            //回包会写入实体并刷新已打开的界面（见 AvaritiaNet.HandleBroadcastWholeTable）。
-            //刚补写过放置数据时不拉取，避免服务端那份（可能尚未收到上传）把本地数据覆盖成空。
+            //多人：向服务端要一次最新内容物以覆盖过期数据；刚补写过放置数据时不拉取，避免被服务端旧数据覆盖成空。
             if (!appliedPending && Main.netMode == NetmodeID.MultiplayerClient)
             {
                 AvaritiaNet.RequestTableData(tileEntity.Position);
@@ -101,10 +92,8 @@ namespace AvaritiaMod.Content.Tiles
             Point16 pos = new(i, j);
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
-                //多人客户端：PlaceEntityNet 只是向服务端发请求，本地这一刻还没有实体，
-                //所以先把内容物暂存下来（首次右键时补写），同时上传给服务端由其写入并广播，
-                //否则只有放置端能看到物品、其它端全是空的。
-                PendingItems[pos] = craftItem.Items;
+                //多人客户端此刻本地还没有实体：先暂存内容物（首次右键补写），同时上传给服务端写入并广播。
+                CraftingTablePending.Set(pos, craftItem.Items);
                 AvaritiaNet.RequestWholeTable(pos, craftItem.Items, craftItem.Items.GetLength(0));
                 return;
             }
@@ -121,7 +110,7 @@ namespace AvaritiaMod.Content.Tiles
                 return;
             }
             //方块没了就不再需要暂存的内容物
-            PendingItems.Remove(new Point16(i, j));
+            CraftingTablePending.Remove(new Point16(i, j));
             CraftingTableUISystem system = ModContent.GetInstance<CraftingTableUISystem>();
             CraftingTableUISystem.CurrentUI?.OnDeactivate();
             if (system.IsTileCurrent(i, j))
@@ -139,28 +128,19 @@ namespace AvaritiaMod.Content.Tiles
         }
         public override IEnumerable<Item> GetItemDrops(int i, int j)
         {
+            //多人客户端不产出任何物品：内容物只存在于服务端实体，客户端本地破坏会凭空生成空工作台并同步给服务端。
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+            {
+                return [];
+            }
             if (!TileEntity.TryGet(i, j, out CraftingTableTileEntity entity))
             {
                 return base.GetItemDrops(i, j);
             }
-            //多人客户端不生成掉落（掉落由服务端负责）；
-            //原先写成“非服务端一律返回空”，导致单人模式下挖掉工作台会连同里面的物品一起消失。
-            if (Main.netMode == NetmodeID.MultiplayerClient)
-            {
-                return base.GetItemDrops(i, j);
-            }
             Item item = new(ModContent.ItemType<TItem>());
-            if (item.ModItem is CraftingTableItem craftItem)
-            {
-                for (int x = 0; x < entity.Size; x++)
-                {
-                    for (int y = 0; y < entity.Size; y++)
-                    {
-                        craftItem.Items?[x, y] = entity.Items?[x, y].Clone() ?? new Item();
-                    }
-                }
-            }
-            item.maxStack = 1;
+            //内容物交给物品自己写入：它同时判定是否带内容物并据此设置 maxStack = 1（Item.Clone 会重置 maxStack）。
+            CraftingTableItem? craftItem = item.ModItem as CraftingTableItem;
+            craftItem?.SetContents(entity.Items);
             return [item];
         }
     }

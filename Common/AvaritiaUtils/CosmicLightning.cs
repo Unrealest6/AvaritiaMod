@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.AvaritiaUtils
+namespace AvaritiaMod.Common.AvaritiaUtils
 {
     /// <summary>
     /// 宇宙闪电
@@ -14,7 +14,8 @@
         /// </summary>
         private int _spawnTimer;
         /// <summary>
-        /// 更新和绘制全部闪电
+        /// 每 6 帧有 1/3 概率生成新闪电，再更新并绘制全部闪电。
+        /// 会结束并重开调用方的 <paramref name="spriteBatch"/>（附加混合 + 游戏缩放矩阵）。
         /// </summary>
         /// <param name="spriteBatch"></param>
         /// <param name="center">闪电环绕中心位置</param>
@@ -74,7 +75,7 @@
         /// </summary>
         private readonly List<List<Vector2>> _branches = [];
         /// <summary>
-        /// 最大持续时间
+        /// 最大持续时间/tick
         /// </summary>
         private readonly int _maxLife;
         /// <summary>
@@ -90,7 +91,7 @@
         /// </summary>
         private readonly float _flickerOffset;
         /// <summary>
-        /// 持续时间
+        /// 持续时间/tick
         /// </summary>
         private int _life;
         /// <summary>
@@ -146,7 +147,7 @@
             }
         }
         /// <summary>
-        /// 构造方法，用于创建闪电实例
+        /// 按球面坐标生成一条带随机分支的闪电
         /// </summary>
         /// <param name="center">环绕中心位置</param>
         /// <param name="radius">覆盖半径大小</param>

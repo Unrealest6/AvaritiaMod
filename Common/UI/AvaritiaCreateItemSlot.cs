@@ -36,7 +36,7 @@ namespace AvaritiaMod.Common.UI
         /// <param name="evt"></param>
         public override void LeftClick(UIMouseEvent evt)
         {
-            //面板正在被拖拽时，这一次点击属于拖拽操作（拖拽开始时会丢弃按下缓存），不参与合成。
+            //面板拖拽中的这一次点击归拖拽操作，不参与合成。
             if (DragUISession.IsAnyPanelDragging)
             {
                 return;
@@ -57,6 +57,8 @@ namespace AvaritiaMod.Common.UI
                     {
                         Item = _cachedRecipe.Result.Clone();
                         _cachedRecipe.ConsumeIngredients(parent.Slots);
+                        //材料被直接改动过，立刻写回实体 / 服务端（不能等下一帧的变更检测）
+                        AvaritiaItemSlot.SyncSlotsOfParent(parent);
                     }
                 }
             }
@@ -88,15 +90,17 @@ namespace AvaritiaMod.Common.UI
                     {
                         Item = _cachedRecipe.Result.Clone();
                         _cachedRecipe.ConsumeIngredients(parent.Slots);
+                        //材料被直接改动过，立刻写回实体 / 服务端（不能等下一帧的变更检测）
+                        AvaritiaItemSlot.SyncSlotsOfParent(parent);
                     }
                 }
             }
             base.RightClick(evt);
         }
         /// <summary>
-        /// 判断能否合成>0数量的物品并将其克隆到<see cref="AvaritiaOutputSlot.Item"/>用于合成判定
+        /// 连续合成直到材料耗尽，并把总数量写入<see cref="AvaritiaOutputSlot.Item"/>。
         /// </summary>
-        /// <returns>能否合成>0数量的物品</returns>
+        /// <returns>是否至少合成出一份物品。</returns>
         private bool CraftRepeatedly()
         {
             if (Parent.Parent is not CraftingTableUI parent)
@@ -110,8 +114,7 @@ namespace AvaritiaMod.Common.UI
                 return false;
             }
             Item = _cachedRecipe.Result.Clone();
-            //配方已经匹配就不可能一份都合不出来；这里兜底至少合成一份，
-            //避免数量算成 0 时这一次点击被静默吞掉（什么都不会发生）。
+            //配方已匹配时兜底按至少一份计算，避免算出 0 时这次点击被静默吞掉。
             int maxCount = Math.Max(1, _cachedRecipe.GetCraftableCount(parent.Slots));
             for (int i = 0; i < maxCount; i++)
             {
@@ -122,6 +125,8 @@ namespace AvaritiaMod.Common.UI
                 }
                 stack += _cachedRecipe.Result.stack;
                 _cachedRecipe.ConsumeIngredients(parent.Slots);
+                //材料被直接改动过，立刻写回实体 / 服务端
+                AvaritiaItemSlot.SyncSlotsOfParent(parent);
             }
             Item.stack = stack;
             return Item.stack > 0;

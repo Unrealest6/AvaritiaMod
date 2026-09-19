@@ -1,10 +1,10 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 中子态素压缩机UI组件
     /// </summary>
     // ReSharper disable once ClassNeverInstantiated.Global
-    public sealed class NeutroniumCompressorUI : DragUIState<UIPanel>
+    public sealed class NeutroniumCompressorUI : DragUIState<UIPanel>, ITileEntityUI<NeutroniumCompressorTileEntity>
     {
         /// <summary>
         /// 输入槽 UI 元素实例
@@ -53,7 +53,7 @@
         /// <summary>
         /// 构造方法，使用反射构造
         /// </summary>
-        /// <param name="tileEntity">中子态素收集器物块实体实例</param>
+        /// <param name="tileEntity">中子态素压缩机物块实体实例</param>
         public NeutroniumCompressorUI(NeutroniumCompressorTileEntity tileEntity)
         {
             TileEntity = tileEntity;

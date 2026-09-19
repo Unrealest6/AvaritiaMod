@@ -9,9 +9,7 @@ namespace AvaritiaMod.Content.Projectiles
         private static readonly int[] PrepareTimes = [8, 6, 6];
         private static readonly int[] SwingTimes = [8, 8, 14];
         private static readonly int[] UnwindTimes = [10, 10, 12];
-        /// <summary>
-        /// 星空RT
-        /// </summary>
+        /// <summary>星空渲染目标：按宇宙半径复用，半径或缩放变化时重建。</summary>
         private static RenderTarget2D? _cosmicRT;
         private Vector2 _drawVector2;
         private Vector2 _lastEndVector2;

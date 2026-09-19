@@ -9,6 +9,15 @@ namespace AvaritiaMod.Content.TileEntities
         internal Item ProcessingItem { get; private set; } = new();
         internal bool IsWorking { get; private set; }
         private int _processTimer;
+        /// <summary>距下次强制同步还剩多少 tick：状态变化时立即同步，否则每 30 tick 补一次（防丢包）。</summary>
+        private int _syncCooldown;
+        private int _lastInputType = -1;
+        private int _lastInputStack = -1;
+        private int _lastOutputType = -1;
+        private int _lastOutputStack = -1;
+        private int _lastProcessingType = -1;
+        private int _lastProcessingStack = -1;
+        private bool _lastWorking;
         public static void SendInputChange(Point16 tilePos, Item inputItem)
             => AvaritiaNet.RequestCompressorSlot(tilePos, inputItem, output: false);
         public static void SendOutputChange(Point16 tilePos, Item outputItem)
@@ -26,7 +35,7 @@ namespace AvaritiaMod.Content.TileEntities
             {
                 return;
             }
-            if (Main.netMode == NetmodeID.Server)
+            if (Main.netMode == NetmodeID.Server && ShouldSyncCompressor())
             {
                 SendWholeCompressor();
             }
@@ -94,6 +103,30 @@ namespace AvaritiaMod.Content.TileEntities
             ProcessingItem = ItemIO.Receive(reader, readStack: true, readFavorite: true);
             IsWorking = reader.ReadBoolean();
             _processTimer = reader.ReadInt32();
+        }
+        /// <summary>
+        /// 服务端是否需要广播整台压缩机：只在界面可见状态变化时发包（进度每 3 tick 变一次），
+        /// 并每 30 tick 兜底同步一次，避免空闲时逐 tick 发包。
+        /// </summary>
+        private bool ShouldSyncCompressor()
+        {
+            bool changed = InputItem.type != _lastInputType || InputItem.stack != _lastInputStack
+                || OutputItem.type != _lastOutputType || OutputItem.stack != _lastOutputStack
+                || ProcessingItem.type != _lastProcessingType || ProcessingItem.stack != _lastProcessingStack
+                || IsWorking != _lastWorking;
+            if (!changed && --_syncCooldown > 0)
+            {
+                return false;
+            }
+            _lastInputType = InputItem.type;
+            _lastInputStack = InputItem.stack;
+            _lastOutputType = OutputItem.type;
+            _lastOutputStack = OutputItem.stack;
+            _lastProcessingType = ProcessingItem.type;
+            _lastProcessingStack = ProcessingItem.stack;
+            _lastWorking = IsWorking;
+            _syncCooldown = 30;
+            return true;
         }
         public override void SaveData(TagCompound tag)
         {

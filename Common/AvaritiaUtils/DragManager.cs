@@ -79,8 +79,7 @@ namespace AvaritiaMod.Common.AvaritiaUtils
         }
         public static void MouseDown(DragType type, AvaritiaItemSlot slot)
         {
-            //正在拖拽面板时不要开始槽位拖拽：玩家此时按住的是“移动窗口”，
-            //如果同时开始分堆，鼠标上的物品会被分到经过的每一个槽位里。
+            //拖拽窗口时不要开始槽位拖拽，否则鼠标上的物品会被分到经过的每一个槽位
             if (DragUISession.IsAnyPanelDragging)
             {
                 return;

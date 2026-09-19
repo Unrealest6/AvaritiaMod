@@ -47,34 +47,40 @@ namespace AvaritiaMod.Content.Items.Tools
             return false;
         }
         public override bool AltFunctionUse(Player player) => true;
-        /// <summary>破坏一整条藤蔓：向下与向上都要处理，而且每次访问方块前必须做边界检查。
-        /// </summary>
+        /// <summary>破坏一整条藤蔓：向下与向上都要处理，每次访问方块前必须做边界检查。</summary>
         private void BreakVineColumn(int x, int y, List<Point16>? pendingBreaks)
         {
-            for (int vineY = y; AvaritiaBreakHelper.InBounds(x, vineY) && IsVineTile(Framing.GetTileSafely(x, vineY).TileType); vineY++)
+            for (int vineY = y; BreakHelper.InBounds(x, vineY) && IsVineTile(Framing.GetTileSafely(x, vineY).TileType); vineY++)
             {
                 BreakTileBatched(x, vineY, pendingBreaks);
             }
-            for (int vineY = y - 1; AvaritiaBreakHelper.InBounds(x, vineY) && IsVineTile(Framing.GetTileSafely(x, vineY).TileType); vineY--)
+            for (int vineY = y - 1; BreakHelper.InBounds(x, vineY) && IsVineTile(Framing.GetTileSafely(x, vineY).TileType); vineY--)
             {
                 BreakTileBatched(x, vineY, pendingBreaks);
             }
         }
-        /// <summary>
-        /// 破坏一格：本地立即执行以保证手感，多人客户端把坐标收集起来稍后<b>一次性</b>发给服务端。
-        /// </summary>
+        /// <summary>破坏一格：本地立即执行以保证手感，多人客户端把坐标收集起来稍后<b>一次性</b>发给服务端。</summary>
         private static void BreakTileBatched(int x, int y, List<Point16>? pendingBreaks)
         {
-            if (!AvaritiaBreakHelper.InBounds(x, y))
+            if (!BreakHelper.InBounds(x, y))
             {
                 return;
             }
             pendingBreaks?.Add(new Point16(x, y));
-            WorldGen.KillTile(x, y, noItem: true);
+            //本地破坏（不发包，批量包由调用方统一发出）+ 屏蔽自动掉落（家具类方块会无视 noItem）
+            BreakHelper.BreakTileLocal(x, y);
         }
-        /// <summary>把同步区域裁剪到世界范围内再发送（贴边挖掘时原实现会发出越界矩形）。</summary>
+        /// <summary>
+        /// 把同步区域裁剪到世界范围内再发送（贴边挖掘会算出越界矩形）。
+        /// <para>只有<b>服务端</b>才主动同步地形：客户端发这个只是把本地那份（可能过期的）地形报上去，会与服务端的破坏互相覆盖；
+        /// 客户端的破坏通过批量包交给服务端同步（见库里的 <c>BreakNet.HandleServerKillTiles</c>）。</para>
+        /// </summary>
         private static void SyncArea(int left, int top, int width, int height)
         {
+            if (Main.netMode != NetmodeID.Server)
+            {
+                return;
+            }
             int minX = Math.Max(0, left);
             int minY = Math.Max(0, top);
             int maxX = Math.Min(Main.maxTilesX - 1, left + width - 1);
@@ -93,8 +99,8 @@ namespace AvaritiaMod.Content.Items.Tools
                 !(Main.MouseWorld.Y < player.Center.Y + Player.tileRangeY * 16) ||
                 !(Main.MouseWorld.X > player.Center.X - Player.tileRangeX * 16) ||
                 !(Main.MouseWorld.Y > player.Center.Y - Player.tileRangeY * 16) ||
-                //鼠标可能在世界外：必须先做边界检查再取方块，原实现的直接索引会越界
-                !AvaritiaBreakHelper.InBounds(baseX, baseY) ||
+                //鼠标可能在世界外：必须先做边界检查再取方块
+                !BreakHelper.InBounds(baseX, baseY) ||
                 !Framing.GetTileSafely(baseX, baseY).HasTile ||
                 player.altFunctionUse != 2 || !Main.keyState.IsKeyDown(Keys.LeftShift))
             {
@@ -109,7 +115,7 @@ namespace AvaritiaMod.Content.Items.Tools
                 {
                     int x = baseX + dx;
                     int y = baseY + dy;
-                    if (!AvaritiaBreakHelper.InBounds(x, y))
+                    if (!BreakHelper.InBounds(x, y))
                     {
                         continue;
                     }
@@ -120,7 +126,7 @@ namespace AvaritiaMod.Content.Items.Tools
                     }
                     if (Main.tileAxe[tile.TileType])
                     {
-                        if (AvaritiaBreakHelper.TryGetDrop(x, y, tile, out int itemType, out int stack))
+                        if (BreakHelper.TryGetDrop(x, y, tile, out int itemType, out int stack))
                         {
                             drops.Add(new Item(itemType, stack));
                         }
@@ -128,7 +134,7 @@ namespace AvaritiaMod.Content.Items.Tools
                     }
                     else if (IsGrassTile(tile.TileType))
                     {
-                        //原实现传的是 fail: true，导致客户端永远打不掉草皮、服务端却会打掉（两端不一致）
+                        //草皮两端必须一致：客户端也要本地执行，否则会出现一端有草一端没草
                         BreakTileBatched(x, y, pendingBreaks);
                     }
                     else if (IsPlantTile(tile.TileType))
@@ -143,15 +149,14 @@ namespace AvaritiaMod.Content.Items.Tools
             }
             if (pendingBreaks is { Count: > 0 })
             {
-                AvaritiaNet.RequestServerKillTiles(pendingBreaks, noItem: true);
+                BreakHelper.RequestServerKillTiles(pendingBreaks, noItem: true);
             }
             SyncArea(baseX - 14, baseY - 28, 28, 56);
             if (drops.Count <= 0)
             {
                 return base.CanUseItem(player);
             }
-            //合并（按类型 + 前缀）后装入物质团：与 WorldBreaker / PlanetEater 共用同一实现，
-            //不再各自维护一份容易失配的合并逻辑。
+            //合并（按类型 + 前缀）后装入物质团，与 WorldBreaker / PlanetEater 共用 AvaritiaBreakHelper 的同一实现
             AvaritiaBreakHelper.SpawnAsClusters(drops, Main.MouseWorld);
             drops.Clear();
             return base.CanUseItem(player);

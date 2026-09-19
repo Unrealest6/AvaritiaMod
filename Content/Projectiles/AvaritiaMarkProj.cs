@@ -36,10 +36,9 @@ namespace AvaritiaMod.Content.Projectiles
         {
             if (Projectile.ai[1] > 0 && Projectile.owner == Main.myPlayer)
             {
-                //原先这里每 tick 都 netUpdate = true。追踪目标完全由“已同步的 NPC 位置 + 本地位置”推导，
-                //各端跑同一套 AI 会得到同一结果，重复发包只会造成同步流量浪费。
+                //追踪目标由已同步的 NPC 位置推导，各端结果一致，无需每 tick 发包。
                 Player player = Main.player[Projectile.owner];
-                NPC? npc = Main.npc.Where(npc => npc.active && npc is { immortal: false, friendly: false, lifeMax: > 1 } && npc.DistanceSQ(player.Center) < 1048576).GetRecent(Projectile.Center, 768);
+                NPC? npc = FindTarget(player);
                 Projectile.Center = npc?.Center ?? Projectile.Center;
             }
         }
@@ -47,10 +46,9 @@ namespace AvaritiaMod.Content.Projectiles
         {
             if (Projectile.ai[1] > 0 && Projectile.owner == Main.myPlayer)
             {
-                //传送与生成无尽剑必须由拥有者执行：每个客户端都跑一遍会让本地玩家被“其它客户端算出来的位置”反复传送，
-                //服务端也会凭空多出无尽剑。拥有者传送后由原版传送包同步给其它端。
+                //传送与生成无尽剑只能由拥有者执行，否则各端会互相反复传送、服务端还会凭空多出无尽剑；位置由原版传送包同步。
                 Player player = Main.player[Projectile.owner];
-                NPC? npc = Main.npc.Where(npc => npc.active && npc is { immortal: false, friendly: false, lifeMax: > 1 } && npc.DistanceSQ(player.Center) < 1048576).GetRecent(Projectile.Center, 768);
+                NPC? npc = FindTarget(player);
                 Projectile.Center = npc?.Center ?? Projectile.Center;
                 player.immune = true;
                 player.immuneTime = 30;
@@ -68,6 +66,11 @@ namespace AvaritiaMod.Content.Projectiles
                 }
             }
         }
+        /// <summary>取离玩家 64 格内、最近的可追踪 NPC（数组版本，避免每 tick 开 LINQ 迭代器）。</summary>
+        private NPC? FindTarget(Player player)
+            => Main.npc.GetNearest(Projectile.Center,
+                npc => npc is { immortal: false, friendly: false, lifeMax: > 1 } && npc.DistanceSQ(player.Center) < 1048576,
+                768);
         public override bool PreDraw(ref Color lightColor)
         {
             Texture2D? texture = Projectile.ai[1] == 0 ? HeavenArrowMarkFrame?.GetCurrentFrame() : TextureAssets.Projectile[Type].Value;
@@ -97,7 +100,7 @@ namespace AvaritiaMod.Content.Projectiles
             float width = texture.Width;
             float height = texture.Height;
             Vector2 half = new(width / 2f, height / 2f);
-            //复用静态顶点缓冲：原实现每次绘制都 new 两个数组（每帧 6 次分配）。
+            //复用静态顶点缓冲，避免每帧绘制重复分配数组。
             RingVertices[0] = new RainbowVertex(center + new Vector2(-half.X, -half.Y), new Vector2(0, 0));
             RingVertices[1] = new RainbowVertex(center + new Vector2(half.X, -half.Y), new Vector2(1, 0));
             RingVertices[2] = new RainbowVertex(center + new Vector2(-half.X, half.Y), new Vector2(0, 1));
@@ -124,10 +127,7 @@ namespace AvaritiaMod.Content.Projectiles
             gd.DepthStencilState = previousDepth;
             gd.RasterizerState = previousRasterizer;
         }
-        /// <summary>
-        /// 惰性加载彩虹环 Effect 并缓存技术/通道/参数句柄。
-        /// <para>原实现每次绘制都做一次 <c>ModContent.Request&lt;Effect&gt;</c> 加多次名称查找。</para>
-        /// </summary>
+        /// <summary>惰性加载彩虹环 Effect，并缓存技术与参数句柄，避免每次绘制重复请求与查找。</summary>
         private static void EnsureRainbowEffect()
         {
             if (_effectRequested || Main.dedServ)

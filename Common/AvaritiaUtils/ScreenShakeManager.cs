@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.AvaritiaUtils
+namespace AvaritiaMod.Common.AvaritiaUtils
 {
     /// <summary>
     /// 屏幕震动管理器
@@ -14,11 +14,11 @@
         /// </summary>
         private static int _life;
         /// <summary>
-        /// 最大持续时间
+        /// 最大持续时间（衰减基准）
         /// </summary>
         private static int _maxLife;
         /// <summary>
-        /// 添加震动
+        /// 添加震动；比当前更弱且更短的请求会被忽略
         /// </summary>
         /// <param name="intensity">强度</param>
         /// <param name="duration">持续时间</param>
@@ -50,9 +50,8 @@
             _maxLife = 0;
         }
         /// <summary>
-        /// 屏幕偏移
+        /// 取当前帧的屏幕偏移：随机方向抖动，强度按剩余时间线性衰减
         /// </summary>
-        /// <returns>屏幕偏移量</returns>
         internal static Vector2 GetShakeOffset()
         {
             if (_life <= 0 || _intensity <= 0f)

@@ -3,7 +3,7 @@ namespace AvaritiaMod.Common.UI
     /// <summary>
     /// 工作台UI组件，继承<see cref="DragUIState{T}"/>拥有拖拽功能
     /// </summary>
-    public abstract class CraftingTableUI : DragUIState<UIPanel>
+    public abstract class CraftingTableUI : DragUIState<UIPanel>, ITileEntityUI<CraftingTableTileEntity>
     {
         /// <summary>
         /// 槽位尺寸常量
@@ -23,9 +23,7 @@ namespace AvaritiaMod.Common.UI
         public AvaritiaItemSlot[,]? Slots { get; private set; }
         /// <summary>
         /// 当前高亮的配方列表槽位。
-        /// <para>高亮状态必须由面板统一持有，而不是各个配方槽位记在自己身上：
-        /// 槽位只知道自己被点过，点第二个配方时第一个槽位的“我在高亮”标记没人清，
-        /// 表现就是“点一个亮一个，旧的高亮一直不恢复”（原实现即如此）。</para>
+        /// <para>高亮状态必须由面板统一持有：若各槽位自记，点击新配方时旧槽位的标记无人清除，旧高亮不会恢复。</para>
         /// </summary>
         public AvaritiaRecipeItemSlot? HighlightedRecipeSlot { get; private set; }
         /// <summary>高亮指定配方列表槽位（同一时刻只允许一个配方处于高亮状态）。</summary>
@@ -138,6 +136,8 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         public override void OnDeactivate()
         {
+            //关闭前把槽位内容写回实体 / 服务端（实体里的旧数据会在下次打开时把物品“变回来”）
+            AvaritiaItemSlot.SyncSlotsOfParent(this);
             if (Element is null)
             {
                 return;

@@ -1,68 +1,54 @@
 namespace AvaritiaMod.Common.GlobalTiles
 {
+    /// <summary>
+    /// 模组自己的物块判定：三个工具“形态 0”的单块挖掘规则。
+    /// <para>通用的部分（屏蔽自动掉落、收集窗口、罐子奖励兜底）在库的
+    /// <see cref="BreakGlobalTile"/>；形态 1 的范围挖掘在工具自己的 <c>UseItem</c> 里。</para>
+    /// </summary>
     public sealed class AvaritiaGlobalTile : GlobalTile
     {
         public override bool CanKillTile(int i, int j, int type, ref bool blockDamaged)
         {
             Player player = Main.LocalPlayer;
             Item heldItem = player.HeldItem;
-            if (!player.controlUseItem || heldItem.IsAir || !AvaritiaBreakHelper.InBounds(i, j)
+            if (!player.controlUseItem || heldItem.IsAir || !BreakHelper.InBounds(i, j)
                 || !player.IsInTileInteractionRange(i, j, TileReachCheckSettings.Simple))
             {
                 return base.CanKillTile(i, j, type, ref blockDamaged);
             }
             Tile tile = Framing.GetTileSafely(i, j);
-            if (!tile.HasTile)
+            //形态 1（范围挖掘）由工具自己的 UseItem 处理，这里只管形态 0 的单块挖掘
+            if (!tile.HasTile || AvaritiaPlayer.GetItemMode(player, heldItem.type) != 0)
             {
                 return base.CanKillTile(i, j, type, ref blockDamaged);
             }
-            //世界崩解之镐·形态 0：非斧类方块瞬破，矿石额外乘算产量
-            if (heldItem.ModItem is WorldBreaker
-                && AvaritiaPlayer.GetItemMode(player, heldItem.type) == 0
-                && !Main.tileAxe[tile.TileType])
-            {
-                if (TileID.Sets.Ore[tile.TileType])
-                {
-                    if (AvaritiaBreakHelper.TryGetDrop(i, j, tile, out int itemType, out int stack))
-                    {
-                        AvaritiaBreakHelper.SpawnDrop(i, j, new Item(itemType, stack * Main.rand.Next(4, 41)));
-                    }
-                    AvaritiaBreakHelper.BreakTile(i, j);
-                }
-                else if (TileID.Sets.BasicChest[tile.TileType])
-                {
-                    //箱子保持原版行为：箱内还有物品时原版会判定“该格应当存活”，
-                    //与其他镐一致——挖不动、也不掉落；空箱子照常破坏。
-                    //（范围挖掘模式形态 1 仍然走“内容物 → 物质团”的处理。）
-                    return base.CanKillTile(i, j, type, ref blockDamaged);
-                }
-                else
-                {
-                    //其余方块（家具等）交给原版处理
-                    AvaritiaBreakHelper.BreakTileWithVanillaDrops(i, j);
-                }
-                SyncTileChange(i, j);
-                return true;
-            }
-            bool shovelMode = heldItem.ModItem is PlanetEater
-                              && AvaritiaPlayer.GetItemMode(player, heldItem.type) == 0
-                              && TileID.Sets.CanBeDugByShovel[tile.TileType];
+            bool worldBreaker = heldItem.ModItem is WorldBreaker && !Main.tileAxe[tile.TileType];
+            bool shovelMode = heldItem.ModItem is PlanetEater && TileID.Sets.CanBeDugByShovel[tile.TileType];
             bool axeMode = heldItem.ModItem is NatureRuin && Main.tileAxe[tile.TileType];
-            if (!shovelMode && !axeMode)
+            //箱子交给原版：箱内有物品时原版判该格存活，与镐一致（只有范围挖掘形态才收内容物）
+            if (!worldBreaker && !shovelMode && !axeMode || worldBreaker && TileID.Sets.BasicChest[tile.TileType])
             {
                 return base.CanKillTile(i, j, type, ref blockDamaged);
             }
-            AvaritiaBreakHelper.BreakTileWithVanillaDrops(i, j);
-            SyncTileChange(i, j);
-            return true;
-        }
-        /// <summary>把单个方块的变化同步给其它客户端。</summary>
-        private static void SyncTileChange(int i, int j)
-        {
+            if (worldBreaker && TileID.Sets.Ore[tile.TileType])
+            {
+                //矿石额外产出：用工具上的“额外掉落”表，与范围挖掘共用同一份规则
+                foreach (Item drop in BreakHelper.GetTileItemDrops(i, j, IAoeMiningTool.GetIAoeMiningTool(heldItem)?.ExtraDropModifier))
+                {
+                    BreakHelper.SpawnDrop(i, j, drop);
+                }
+                BreakHelper.BreakTile(i, j);
+            }
+            else
+            {
+                //其余方块（家具等）交给原版掉落
+                BreakHelper.BreakTileWithVanillaDrops(i, j);
+            }
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
                 NetMessage.SendTileSquare(-1, i, j, 1);
             }
+            return true;
         }
     }
 }

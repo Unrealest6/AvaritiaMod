@@ -1,6 +1,6 @@
 namespace AvaritiaMod.Content.Items.Tools
 {
-    public sealed class WorldBreaker : AvaritiaModeItem
+    public sealed class WorldBreaker : AoeToolItem
     {
         public override Dictionary<byte, FrameTexture?> FrameTextures => new()
         {
@@ -50,7 +50,7 @@ namespace AvaritiaMod.Content.Items.Tools
             }
         }
         /// <summary>形态 0：无限镐力；形态 1：范围破坏。</summary>
-        protected override byte ModeCount => 2;
+        public override byte ModeCount => 2;
         protected override void ApplyModeStats(Item heldItem, byte mode)
         {
             heldItem.knockBack = mode == 0 ? 2 : 32;
@@ -58,70 +58,37 @@ namespace AvaritiaMod.Content.Items.Tools
         }
         /// <summary>
         /// 形态 1 的范围破坏。
-        /// <para>必须放在 <c>UseItem</c> 而不是 <c>CanUseItem</c>：后者一帧可能被调用多次，
-        /// 原实现把整片挖掘与物质团生成都写在里面，一次挥动会产出好几倍的掉落。</para>
+        /// <para>必须放在 <c>UseItem</c> 而不是 <c>CanUseItem</c>：后者一帧可能被调用多次，写在那里会让一次挥动产出好几倍的掉落。</para>
         /// </summary>
         public override bool? UseItem(Player player)
         {
-            int baseX = (int)(Main.MouseWorld.X / 16);
-            int baseY = (int)(Main.MouseWorld.Y / 16);
-            if (!player.IsInTileInteractionRange(baseX, baseY, TileReachCheckSettings.Simple)
-                || !AvaritiaBreakHelper.InBounds(baseX, baseY)
-                || !Framing.GetTileSafely(baseX, baseY).HasTile
-                || GetHeldMode(player) != 1)
+            if (!TryBeginAoeSwing(player, out BreakHelper.AoeSwing swing))
             {
                 return base.UseItem(player);
             }
-            List<Item> drops = [];
-            //一次挥动内同一个箱子只能处理一次：FindChestByGuessing 会命中箱子的多个相邻格子
-            HashSet<int> processedChests = [];
-            for (int dx = -14; dx < 14; dx++)
+            ForEachAoeTile((tile, x, y) =>
             {
-                for (int dy = -14; dy < 14; dy++)
+                if (!tile.HasTile)
                 {
-                    int x = baseX + dx;
-                    int y = baseY + dy;
-                    if (!AvaritiaBreakHelper.InBounds(x, y))
-                    {
-                        continue;
-                    }
-                    Tile tile = Framing.GetTileSafely(x, y);
-                    if (tile.HasTile && TileID.Sets.CanBeDugByShovel[tile.TileType])
-                    {
-                        AvaritiaBreakHelper.BreakTile(x, y);
-                    }
-                    else if (tile.HasTile && !Main.tileAxe[tile.TileType])
-                    {
-                        //箱子：按左上角定位并先真正清空箱内物品，否则 Chest.DestroyChest 会失败，
-                        //WorldGen.KillTile 就会认为“该格应当存活”，箱子永远打不掉且每次挥动重复取内容。
-                        //内容物与箱子本体都会并入 drops（最终合并成物质团）。
-                        List<Item>? chestLoot = AvaritiaBreakHelper.TakeChestLoot(tile, x, y, processedChests);
-                        if (chestLoot is not null)
-                        {
-                            drops.AddRange(chestLoot);
-                        }
-                        else
-                        {
-                            if (AvaritiaBreakHelper.TryGetDrop(x, y, tile, out int itemType, out int stack))
-                            {
-                                drops.Add(TileID.Sets.Ore[tile.TileType]
-                                    ? new Item(itemType, stack * Main.rand.Next(4, 41))
-                                    : new Item(itemType, stack));
-                            }
-                            AvaritiaBreakHelper.BreakTile(x, y);
-                        }
-                    }
-                    WorldGen.KillWall(x, y);
+                    //空地上也可能有墙，抹墙照常处理
+                    swing.KillWall(x, y);
+                    return;
                 }
-            }
-            NetMessage.SendTileSquare(-1, baseX - 14, baseY - 14, 28, 28);
-            if (drops.Count <= 0)
-            {
-                return base.UseItem(player);
-            }
-            //合并后装进物质团（单个上限 4096，装不下的部分才散落）——内容按物品实例保存，多个物质团互不覆盖
-            AvaritiaBreakHelper.SpawnAsClusters(drops, Main.MouseWorld);
-            drops.Clear();
+                if (TileID.Sets.CanBeDugByShovel[tile.TileType])
+                {
+                    //软物块（泥土、沙等）只抹掉、不产出掉落，坐标先收集、结束时批量交服务端；必须带上收集窗口，否则被它支撑的罐子级联碎掉后奖励会被屏蔽掉
+                    swing.ServerBreakOrigins?.Add(new Point16(x, y));
+                    BreakHelper.BreakTileLocal(x, y, noItem: true, sink: swing.Drops);
+                }
+                else if (!Main.tileAxe[tile.TileType])
+                {
+                    //统一结算：多格物块只在左上角结算一次；箱子内容物与本体、模组机器 / 家具里存的物品一并计入
+                    BreakHelper.ProcessAoeTile(tile, x, y, swing);
+                }
+                swing.KillWall(x, y);
+            });
+            //地形同步交给 FinishAoeSwing：服务端按整片区域同步（客户端自己发只会把本地那份报上去）
+            BreakHelper.FinishAoeSwing(swing, Main.MouseWorld);
             return base.UseItem(player);
         }
         public override void AddRecipes()

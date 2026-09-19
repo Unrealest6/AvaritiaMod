@@ -4,7 +4,7 @@ namespace AvaritiaMod.Common.UI
     /// 中子态素收集器UI组件
     /// </summary>
     // ReSharper disable once ClassNeverInstantiated.Global
-    public sealed class NeutronCollectorUI : DragUIState<UIPanel>
+    public sealed class NeutronCollectorUI : DragUIState<UIPanel>, ITileEntityUI<NeutronCollectorTileEntity>
     {
         /// <summary>
         /// 输出槽 UI 元素实例

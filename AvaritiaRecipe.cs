@@ -42,12 +42,19 @@ namespace AvaritiaMod
             _cacheValid = true;
             return result;
         }
-        /// <summary>清空匹配缓存（配方集合发生变化时调用）。</summary>
+        /// <summary>清空匹配缓存（配方集合发生变化时调用；可合成数量的缓存按槽位内容快照自校验，无需清）。</summary>
         public static void InvalidateCache()
         {
             _cachedContents = null;
             _cachedRecipe = null;
             _cacheValid = false;
+        }
+        /// <summary>清空所有跨会话的静态状态（模组卸载时调用：配方实例与缓存都会持有旧的物品类型号）。</summary>
+        public static void ResetStatics()
+        {
+            InvalidateCache();
+            _recipes.Clear();
+            Hook_Register = null;
         }
         /// <summary>把槽位内容拍平成 [type, stack] 序列（仅用于缓存比较）。</summary>
         private static int[] SnapshotContents(AvaritiaItemSlot[,] slots, int dim)
@@ -114,7 +121,7 @@ namespace AvaritiaMod
                     return null;
                 }
                 _recipes.Add(this);
-                //配方集合变了，之前缓存的“匹配结果”可能已经不对
+                //配方集合变了，匹配结果缓存需要失效
                 InvalidateCache();
                 return this;
             };
@@ -220,8 +227,7 @@ namespace AvaritiaMod
             {
                 return 0;
             }
-            //可合成数量也按“槽位内容快照”缓存：无序配方要跑一次回溯搜索，
-            //而按住 Shift 时这个方法每帧都会被调用。
+            //可合成数量同样按槽位内容快照缓存：无序配方要跑一次回溯搜索，而按住 Shift 时每帧都会调用
             int dim = slots.GetLength(0);
             if (_countContents is not null && dim == _countDim && ContentsUnchanged(slots, _countContents, dim))
             {

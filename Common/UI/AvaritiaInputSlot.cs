@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 无尽贪婪的输入槽UI元素
@@ -10,11 +10,11 @@
         /// </summary>
         public Item Item { get; set; } = new();
         /// <summary>
-        /// 槽位前物品，用于物品改变时判定
+        /// 用于检测变化的上一次物品快照
         /// </summary>
         private Item OldItem { get; set; }
         /// <summary>
-        /// 构造方法，初始化UI和将<see cref="Item"/>克隆到<see cref="OldItem"/>
+        /// 初始化尺寸，并把<see cref="Item"/>同步到<see cref="OldItem"/>
         /// </summary>
         protected AvaritiaInputSlot()
         {
@@ -35,10 +35,16 @@
         /// 当<see cref="Item"/>与<see cref="OldItem"/>不同时触发
         /// </summary>
         protected virtual void OnItemChanged() { }
+        /// <summary>
+        /// 立即把当前物品写回数据源（物块实体 / 服务端）。
+        /// <para>直接改动 <see cref="Item"/> 的地方必须调用：只靠 <see cref="Update"/> 的变更检测时，
+        /// 界面若在同一帧被关闭 / 重开，就会把数据源里的旧内容搬回槽位，而玩家手上已经拿到了物品（刷物品）。</para>
+        /// </summary>
+        public void SyncItem() => OnItemChanged();
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            //判定OldItem是否与Item相同，不相同则触发OnItemChanged方法并将Item克隆到OldItem
+            //Item 未重写 Equals，只能逐字段比对。
             if (OldItem.type == Item.type && OldItem.stack == Item.stack && OldItem.prefix == Item.prefix && OldItem.maxStack == Item.maxStack
                 && OldItem.damage == Item.damage && OldItem.crit == Item.crit && OldItem.defense == Item.defense
                 && OldItem.DamageType == Item.DamageType && OldItem.shoot == Item.shoot)
@@ -69,7 +75,6 @@
             {
                 Main.cursorOverride = 6;
             }
-            //鼠标位于槽位范围内并且槽位中物品不为空时将Item克隆到HoverItem
             Main.HoverItem = Item.Clone();
             Main.hoverItemName = Item.Name;
         }

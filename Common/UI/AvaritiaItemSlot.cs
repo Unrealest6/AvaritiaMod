@@ -6,11 +6,11 @@ namespace AvaritiaMod.Common.UI
     public sealed class AvaritiaItemSlot : AvaritiaInputSlot
     {
         /// <summary>
-        /// 最后一次点击的update值
+        /// 上一次双击所在的帧号，用于抑制紧随其后的单击。
         /// </summary>
         private static ulong _lastDoubleClickFrame;
         /// <summary>
-        /// 展示合成配方的物品列表
+        /// 选中配方时填充的所需材料列表，用于槽位提示与红色不足标记。
         /// </summary>
         public List<Item> ShowItems { get; set; } = [];
         /// <summary>
@@ -85,7 +85,7 @@ namespace AvaritiaMod.Common.UI
             DragManager.JustReleased = false;
             if (DragUISession.IsAnyPanelDragging)
             {
-                //玩家正在拖动整个界面：取消槽位拖拽并且不做任何分堆处理。
+                //面板拖拽中：取消槽位拖拽且不做分堆处理。
                 DragManager.CancelActiveDrag();
                 return;
             }
@@ -186,6 +186,8 @@ namespace AvaritiaMod.Common.UI
             {
                 return;
             }
+            //直接改动过槽位，必须立刻写回实体 / 服务端（不能等下一帧的变更检测）
+            SyncSlotsOfParent(parent);
             SoundEngine.PlaySound(SoundID.Grab);
             _lastDoubleClickFrame = Main.GameUpdateCount;
             Recipe.FindRecipes();
@@ -328,6 +330,18 @@ namespace AvaritiaMod.Common.UI
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
                 CraftingTableTileEntity.SendSlotChange(parent.TileEntity.Position, SlotX, SlotY, Item.Clone());
+            }
+        }
+        /// <summary>把该面板所有输入槽立即写回实体 / 服务端（直接改动过槽位内容后调用）。</summary>
+        public static void SyncSlotsOfParent(CraftingTableUI parent)
+        {
+            if (parent.Slots is null)
+            {
+                return;
+            }
+            foreach (AvaritiaItemSlot slot in parent.Slots)
+            {
+                slot.SyncItem();
             }
         }
     }

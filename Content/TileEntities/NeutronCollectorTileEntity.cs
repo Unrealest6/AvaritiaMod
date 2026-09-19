@@ -28,8 +28,7 @@ namespace AvaritiaMod.Content.TileEntities
             }
             if (Main.netMode == NetmodeID.Server)
             {
-                //原实现每 tick 都向所有客户端广播一份完整实体状态（每秒 60 个包）。
-                //改成“物品变化时立即同步 + 其余情况每 30 tick 同步一次进度”。
+                //物品变化时立即同步，否则每 30 tick 同步一次进度，避免每 tick 广播完整实体。
                 _syncCooldown--;
                 bool itemChanged = OutputItem.type != _lastSyncedType || OutputItem.stack != _lastSyncedStack;
                 if (itemChanged || _syncCooldown <= 0)

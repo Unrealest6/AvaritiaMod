@@ -1,7 +1,7 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
-    /// 能够裁剪纹理绘制的UIImage
+    /// 可裁剪绘制的 UIImage：按偏移量裁掉纹理边缘，用于表现填充进度。
     /// </summary>
     public sealed class CroppedUIImage : UIImage
     {
@@ -14,7 +14,7 @@
         /// </summary>
         public int OffsetY { get; set; }
         /// <summary>
-        /// 方向
+        /// 方向标志：1 按偏移裁剪，其余值一律按 0 处理（不裁剪）
         /// </summary>
         private readonly int _direction;
         /// <summary>

@@ -1,6 +1,6 @@
 namespace AvaritiaMod.Content.Items.Tools
 {
-    public sealed class PlanetEater : AvaritiaModeItem
+    public sealed class PlanetEater : AoeToolItem
     {
         public override Dictionary<byte, FrameTexture?> FrameTextures => new()
         {
@@ -55,55 +55,28 @@ namespace AvaritiaMod.Content.Items.Tools
             }
         }
         /// <summary>形态 0：只能挖 1 点镐力的方块；形态 1：范围铲除。</summary>
-        protected override byte ModeCount => 2;
+        public override byte ModeCount => 2;
         protected override void ApplyModeStats(Item heldItem, byte mode) => heldItem.pick = mode == 0 ? 1 : 0;
         /// <summary>
         /// 形态 1 的范围铲除。
-        /// <para>必须放在 <c>UseItem</c> 而不是 <c>CanUseItem</c>：后者一帧可能被调用多次，
-        /// 原实现把整片挖掘与物质团生成都写在里面，一次挥动会产出好几倍的掉落。</para>
+        /// <para>必须放在 <c>UseItem</c> 而不是 <c>CanUseItem</c>：后者一帧可能被调用多次，写在那里会让一次挥动产出好几倍的掉落。</para>
         /// </summary>
         public override bool? UseItem(Player player)
         {
-            int baseX = (int)(Main.MouseWorld.X / 16);
-            int baseY = (int)(Main.MouseWorld.Y / 16);
-            if (!player.IsInTileInteractionRange(baseX, baseY, TileReachCheckSettings.Simple)
-                || !AvaritiaBreakHelper.InBounds(baseX, baseY)
-                || !Framing.GetTileSafely(baseX, baseY).HasTile
-                || GetHeldMode(player) != 1)
+            if (!TryBeginAoeSwing(player, out BreakHelper.AoeSwing swing))
             {
                 return base.UseItem(player);
             }
-            List<Item> drops = [];
-            for (int dx = -14; dx < 14; dx++)
+            ForEachAoeTile((tile, x, y) =>
             {
-                for (int dy = -14; dy < 14; dy++)
+                //铲子只处理软物块；统一结算：多格物块只算一次，掉落（含模组方块）最终合并成物质团
+                if (tile.HasTile && TileID.Sets.CanBeDugByShovel[tile.TileType])
                 {
-                    int x = baseX + dx;
-                    int y = baseY + dy;
-                    if (!AvaritiaBreakHelper.InBounds(x, y))
-                    {
-                        continue;
-                    }
-                    Tile tile = Framing.GetTileSafely(x, y);
-                    if (!tile.HasTile || !TileID.Sets.CanBeDugByShovel[tile.TileType])
-                    {
-                        continue;
-                    }
-                    if (AvaritiaBreakHelper.TryGetDrop(x, y, tile, out int itemType, out int stack))
-                    {
-                        drops.Add(new Item(itemType, stack));
-                    }
-                    AvaritiaBreakHelper.BreakTile(x, y);
+                    BreakHelper.ProcessAoeTile(tile, x, y, swing);
                 }
-            }
-            NetMessage.SendTileSquare(-1, baseX - 14, baseY - 14, 28, 28);
-            if (drops.Count <= 0)
-            {
-                return base.UseItem(player);
-            }
-            //合并后装进物质团（单个上限 4096，装不下的部分才散落）——内容按物品实例保存，多个物质团互不覆盖
-            AvaritiaBreakHelper.SpawnAsClusters(drops, Main.MouseWorld);
-            drops.Clear();
+            });
+            //地形同步交给 FinishAoeSwing：服务端按整片区域同步（客户端自己发只会把本地那份报上去）
+            BreakHelper.FinishAoeSwing(swing, Main.MouseWorld);
             return base.UseItem(player);
         }
         public override void AddRecipes()

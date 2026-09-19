@@ -1,83 +1,40 @@
 namespace AvaritiaMod
 {
     /// <summary>
-    /// 无尽贪婪的网络层：所有 <see cref="ModPacket"/> 的类型分发、字段读写与发送入口都集中在这里。
+    /// 无尽贪婪的网络层：本模组自己的 <see cref="ModPacket"/> 类型分发、字段读写与发送入口。
+    /// <para>通用的物块破坏 / 抹墙 / 结算请求与手持物形态同步由库负责（<see cref="EternalNet"/> / <c>BreakNet</c> / <c>FrameNet</c>），这里只留本模组自己的消息。</para>
     /// </summary>
     public static class AvaritiaNet
     {
-        /// <summary>构造一个已写好消息类型的包（必须在模组已加载时调用）。</summary>
+        /// <summary>构造一个已写好消息类型与协议版本的包（必须在模组已加载时调用）。</summary>
         private static ModPacket NewPacket(AvaritiaMod.SyncMessageType type)
         {
             ModPacket packet = ModContent.GetInstance<AvaritiaMod>().GetPacket();
             packet.Write((byte)type);
+            packet.Write(AvaritiaMod.ProtocolVersion);
             return packet;
         }
         private static bool ValidPlayerIndex(int index) => index is >= 0 and < Main.maxPlayers;
-        /// <summary>单个批量破坏包最多携带的坐标数（400 × 8 字节 ≈ 3.2KB，远低于包长度上限）。</summary>
-        private const int MaxBatchKillTiles = 400;
-        /// <summary>服务端接受破坏请求的最大距离（像素，≈100 格）。</summary>
-        private const float MaxKillReach = 1600f;
         private static bool ValidNPCIndex(int index) => index >= 0 && index < Main.maxNPCs;
         private static bool ValidProjectileIndex(int index) => index >= 0 && index < Main.maxProjectiles;
-        private static bool InTileBounds(int x, int y) => x >= 0 && x < Main.maxTilesX && y >= 0 && y < Main.maxTilesY;
+        /// <summary>服务端接受“写入方块内数据”请求的最大距离（像素，≈40 格，留足 UI 交互余量）。</summary>
+        private const float MaxDataEditReach = 640f;
+        /// <summary>取发包含法玩家（无效或未激活时返回 null）。</summary>
+        private static Player? GetRequestPlayer(int whoAmI)
+            => ValidPlayerIndex(whoAmI) && Main.player[whoAmI] is { active: true } player ? player : null;
         /// <summary>
-        /// 请求服务端破坏指定物块。
-        /// <para><paramref name="noItem"/> 表示“掉落由谁负责”：调用方自己生成并同步掉落时传 <c>true</c>
-        /// （范围挖掘类工具），希望服务端按原版掉落表生成时传 <c>false</c>。
-        /// 原实现固定让服务端带掉落执行，于是客户端已经手工生成的掉落会与服务端重复。</para>
+        /// 请求方是否有权改写该坐标上的方块数据。
+        /// <para>没有这道校验时，任何客户端都能改写别人的机器 / 工作台内容物（可用来复制物品）。</para>
         /// </summary>
-        public static void RequestServerKillTile(int x, int y, bool noItem)
+        private static bool CanEditBlockData(int whoAmI, Point16 pos)
         {
-            if (Main.netMode == NetmodeID.SinglePlayer || !InTileBounds(x, y))
+            if (GetRequestPlayer(whoAmI) is not { } player)
             {
-                return;
+                return false;
             }
-            ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.ServerKillTile);
-            packet.Write(x);
-            packet.Write(y);
-            packet.Write(noItem);
-            packet.Send();
-        }
-        /// <summary>
-        /// 批量请求服务端破坏物块（范围挖掘工具使用）。
-        /// <para>一次挥动可能命中上千格，逐格 <see cref="RequestServerKillTile"/> 会发出上千个独立包；
-        /// 这里把坐标打包发送，并按 <see cref="MaxBatchKillTiles"/> 分片以免超出包长度上限。</para>
-        /// </summary>
-        public static void RequestServerKillTiles(IReadOnlyList<Point16> tiles, bool noItem = true)
-        {
-            if (Main.netMode == NetmodeID.SinglePlayer || tiles.Count <= 0)
-            {
-                return;
-            }
-            for (int start = 0; start < tiles.Count; start += MaxBatchKillTiles)
-            {
-                int count = Math.Min(MaxBatchKillTiles, tiles.Count - start);
-                ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.ServerKillTiles);
-                packet.Write(count);
-                packet.Write(noItem);
-                for (int i = 0; i < count; i++)
-                {
-                    packet.Write(tiles[start + i].X);
-                    packet.Write(tiles[start + i].Y);
-                }
-                packet.Send();
-            }
-        }
-        /// <summary>
-        /// 请求服务端清空并破坏箱子。
-        /// <para>箱子内容物由发起方处理（会合并进物质团），服务端只负责清掉箱子数据与方块；
-        /// 不做这一步的话，服务端会保留箱子数据，客户端再收到方块同步时就会出现“幽灵箱子”。</para>
-        /// </summary>
-        public static void RequestChestBreak(int x, int y)
-        {
-            if (Main.netMode != NetmodeID.MultiplayerClient || !InTileBounds(x, y))
-            {
-                return;
-            }
-            ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.RequestChestBreak);
-            packet.Write(x);
-            packet.Write(y);
-            packet.Send();
+            float dx = Math.Abs(player.Center.X - (pos.X * 16f + 8f));
+            float dy = Math.Abs(player.Center.Y - (pos.Y * 16f + 8f));
+            return dx <= MaxDataEditReach && dy <= MaxDataEditReach;
         }
         /// <summary>
         /// 上传工作台内容物。
@@ -200,7 +157,7 @@ namespace AvaritiaMod
             ItemIO.Send(item, packet, writeStack: true, writeFavorite: true);
             packet.Send();
         }
-        /// <summary>请求服务端广播本地玩家的星空球体状态。</summary>
+        /// <summary>请求服务端广播本地玩家的宇宙球体状态。</summary>
         public static void RequestCosmicSphere(int playerIndex, bool suit, bool active, int startTime, ushort timer, bool attack)
         {
             if (Main.netMode == NetmodeID.SinglePlayer)
@@ -216,7 +173,7 @@ namespace AvaritiaMod
             packet.Write(attack);
             packet.Send();
         }
-        /// <summary>请求服务端回传所有玩家的星空球体状态（进入世界时使用）。</summary>
+        /// <summary>请求服务端回传所有玩家的宇宙球体状态（进入世界时使用）。</summary>
         public static void RequestCosmicSphereStates()
         {
             if (Main.netMode != NetmodeID.MultiplayerClient)
@@ -224,26 +181,6 @@ namespace AvaritiaMod
                 return;
             }
             NewPacket(AvaritiaMod.SyncMessageType.RequestCosmicSphereStates).Send();
-        }
-        /// <summary>把本地玩家手持物品的形态同步给服务端（由服务端转发给其它客户端）。</summary>
-        public static void SendItemMode(byte mode)
-        {
-            if (Main.netMode == NetmodeID.SinglePlayer)
-            {
-                return;
-            }
-            ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.SyncItemMode);
-            packet.Write(mode);
-            packet.Send();
-        }
-        /// <summary>请求服务端回传所有玩家已记录的物品形态（进入世界时使用）。</summary>
-        public static void RequestItemModes()
-        {
-            if (Main.netMode != NetmodeID.MultiplayerClient)
-            {
-                return;
-            }
-            NewPacket(AvaritiaMod.SyncMessageType.RequestItemModes).Send();
         }
         /// <summary>
         /// 服务端把某个物块实体的整份状态发出去。
@@ -276,6 +213,13 @@ namespace AvaritiaMod
         public static void Handle(BinaryReader reader, int whoAmI)
         {
             AvaritiaMod.SyncMessageType msgType = (AvaritiaMod.SyncMessageType)reader.ReadByte();
+            byte version = reader.ReadByte();
+            if (version != AvaritiaMod.ProtocolVersion)
+            {
+                EternalLog.Warn($"Dropped a packet with protocol version {version} (this build uses {AvaritiaMod.ProtocolVersion}); "
+                    + "the other side is running a different AvaritiaMod build.");
+                return;
+            }
             if (Main.netMode == NetmodeID.Server)
             {
                 HandleOnServer(msgType, reader, whoAmI);
@@ -298,12 +242,6 @@ namespace AvaritiaMod
                 case AvaritiaMod.SyncMessageType.RequestHurtPlayer:
                     HandleRequestHurtPlayer(reader, whoAmI);
                     break;
-                case AvaritiaMod.SyncMessageType.ServerKillTile:
-                    HandleServerKillTile(reader, whoAmI);
-                    break;
-                case AvaritiaMod.SyncMessageType.ServerKillTiles:
-                    HandleServerKillTiles(reader, whoAmI);
-                    break;
                 case AvaritiaMod.SyncMessageType.SyncSlot:
                     HandleSyncSlot(reader, whoAmI);
                     break;
@@ -321,15 +259,6 @@ namespace AvaritiaMod
                     break;
                 case AvaritiaMod.SyncMessageType.RequestCosmicSphereStates:
                     HandleRequestCosmicSphereStates(whoAmI);
-                    break;
-                case AvaritiaMod.SyncMessageType.SyncItemMode:
-                    HandleItemModeRequest(reader, whoAmI);
-                    break;
-                case AvaritiaMod.SyncMessageType.RequestItemModes:
-                    HandleRequestItemModes(whoAmI);
-                    break;
-                case AvaritiaMod.SyncMessageType.RequestChestBreak:
-                    HandleRequestChestBreak(reader, whoAmI);
                     break;
                 case AvaritiaMod.SyncMessageType.RequestWholeTable:
                     HandleRequestWholeTable(reader, whoAmI);
@@ -370,41 +299,14 @@ namespace AvaritiaMod
                 case AvaritiaMod.SyncMessageType.BroadcastCosmicSphereStates:
                     HandleBroadcastCosmicSphereStates(reader);
                     break;
-                case AvaritiaMod.SyncMessageType.SyncItemMode:
-                    HandleItemModeBroadcast(reader);
-                    break;
-                case AvaritiaMod.SyncMessageType.RequestChestBreak:
-                    HandleChestBreakBroadcast(reader);
-                    break;
-                case AvaritiaMod.SyncMessageType.BroadcastItemModes:
-                    HandleItemModesSnapshot(reader);
-                    break;
             }
         }
-        // ---------------------------------------------------------------- 物块
-        private static void HandleRequestChestBreak(BinaryReader reader, int whoAmI)
-        {
-            int x = reader.ReadInt32();
-            int y = reader.ReadInt32();
-            if (!InTileBounds(x, y))
-            {
-                return;
-            }
-            //箱子内容物只有服务端拥有权威副本：某个箱子从未被任何客户端打开过时，
-            //客户端本地那份就是空的。因此必须由服务端取内容 → 生成物质团（自动同步给所有客户端）
-            //→ 破坏箱子；再把同一条消息转发给其它客户端做本地清理，避免留下幽灵箱子。
-            AvaritiaBreakHelper.LootAndBreakChestOnServer(x, y);
-            ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.RequestChestBreak);
-            packet.Write(x);
-            packet.Write(y);
-            packet.Send(ignoreClient: whoAmI);
-            NetMessage.SendTileSquare(-1, x, y, 2, 2);
-        }
+        // ---------------------------------------------------------------- 合成台
         /// <summary>服务端：写入客户端上传的工作台内容物，并转发给其它客户端。</summary>
         private static void HandleRequestWholeTable(BinaryReader reader, int whoAmI)
         {
             Point16 pos = new(reader.ReadInt16(), reader.ReadInt16());
-            if (!ValidPlayerIndex(whoAmI) || GetTable(pos) is not { } table)
+            if (!CanEditBlockData(whoAmI, pos) || GetTable(pos) is not { } table)
             {
                 return;
             }
@@ -420,7 +322,7 @@ namespace AvaritiaMod
         private static void HandleRequestTableData(BinaryReader reader, int whoAmI)
         {
             Point16 pos = new(reader.ReadInt16(), reader.ReadInt16());
-            if (!ValidPlayerIndex(whoAmI) || GetTable(pos) is not { } table)
+            if (!CanEditBlockData(whoAmI, pos) || GetTable(pos) is not { } table)
             {
                 return;
             }
@@ -430,80 +332,6 @@ namespace AvaritiaMod
             table.NetSend(packet);
             packet.Send(whoAmI);
         }
-        private static void HandleChestBreakBroadcast(BinaryReader reader)
-        {
-            int x = reader.ReadInt32();
-            int y = reader.ReadInt32();
-            if (!InTileBounds(x, y))
-            {
-                return;
-            }
-            //服务端已经取走内容物并掉落，这里只做本地清理（清空箱子副本 + 破坏方块），不产出任何物品
-            AvaritiaBreakHelper.ClearAndBreakChestAt(x, y);
-        }
-        private static void HandleServerKillTile(BinaryReader reader, int whoAmI)
-        {
-            int x = reader.ReadInt32();
-            int y = reader.ReadInt32();
-            bool noItem = reader.ReadBoolean();
-            // 原实现直接用包里的坐标调用 WorldGen，越界坐标会造成异常或破坏地形数据。
-            if (!InTileBounds(x, y))
-            {
-                return;
-            }
-            // 只接受来自有效玩家、且目标在其附近（1600 像素≈100 格）的请求。
-            // 工具本身的判定在客户端完成，这里只是拦住明显的伪造包。
-            if (whoAmI >= 0)
-            {
-                if (!ValidPlayerIndex(whoAmI) || Main.player[whoAmI] is not { active: true } player || !WithinReach(player, x, y))
-                {
-                    return;
-                }
-            }
-            WorldGen.KillWall(x, y);
-            WorldGen.KillTile(x, y, noItem: noItem);
-        }
-        /// <summary>
-        /// 批量破坏：语义与 <see cref="HandleServerKillTile"/> 相同，只是一次处理多格坐标。
-        /// <para>越界坐标或超出玩家可达范围的格直接跳过，不影响同一包里其余坐标。</para>
-        /// </summary>
-        private static void HandleServerKillTiles(BinaryReader reader, int whoAmI)
-        {
-            int count = reader.ReadInt32();
-            bool noItem = reader.ReadBoolean();
-            if (count <= 0 || count > MaxBatchKillTiles)
-            {
-                return;
-            }
-            Player? player = null;
-            if (whoAmI >= 0)
-            {
-                if (!ValidPlayerIndex(whoAmI) || Main.player[whoAmI] is not { active: true } sender)
-                {
-                    return;
-                }
-                player = sender;
-            }
-            for (int i = 0; i < count; i++)
-            {
-                int x = reader.ReadInt32();
-                int y = reader.ReadInt32();
-                if (!InTileBounds(x, y) || (player is not null && !WithinReach(player, x, y)))
-                {
-                    continue;
-                }
-                WorldGen.KillWall(x, y);
-                WorldGen.KillTile(x, y, noItem: noItem);
-            }
-        }
-        /// <summary>目标物块是否在玩家可达范围内（用于拦截明显的伪造包）。</summary>
-        private static bool WithinReach(Player player, int x, int y)
-        {
-            float dx = Math.Abs(player.Center.X - (x * 16f + 8f));
-            float dy = Math.Abs(player.Center.Y - (y * 16f + 8f));
-            return dx <= MaxKillReach && dy <= MaxKillReach;
-        }
-        // ---------------------------------------------------------------- 合成台
         private static void HandleBroadcastWholeTable(BinaryReader reader)
         {
             Point16 pos = new(reader.ReadInt16(), reader.ReadInt16());
@@ -520,6 +348,10 @@ namespace AvaritiaMod
             byte x = reader.ReadByte();
             byte y = reader.ReadByte();
             Item item = ItemIO.Receive(reader, readStack: true, readFavorite: true);
+            if (Main.netMode == NetmodeID.Server && !CanEditBlockData(whoAmI, pos))
+            {
+                return;
+            }
             if (GetTable(pos) is not { } table || table.Items is null || x >= table.Size || y >= table.Size)
             {
                 return;
@@ -539,8 +371,7 @@ namespace AvaritiaMod
             SyncTableToUI(table);
         }
         private static CraftingTableTileEntity? GetTable(Point16 pos)
-            //用原版 TryGet 而不是直接查 ByPosition：它内部会经 TileObjectData.TopLeft 归一化坐标，
-            //否则客户端上报的“放置坐标”不是左上角时服务端会找不到实体（内容物就传不过来）。
+            //用原版 TryGet 而不是直接查 ByPosition：它内部会按 TileObjectData.TopLeft 归一化坐标，否则上报坐标不是左上角时找不到实体
             => TileEntity.TryGet(pos.X, pos.Y, out CraftingTableTileEntity table) ? table : null;
         private static void SyncTableToUI(CraftingTableTileEntity table)
         {
@@ -561,7 +392,7 @@ namespace AvaritiaMod
         {
             Point16 pos = new(reader.ReadInt16(), reader.ReadInt16());
             Item item = ItemIO.Receive(reader, readStack: true, readFavorite: true);
-            if (GetCompressor(pos) is not { } compressor)
+            if (!CanEditBlockData(whoAmI, pos) || GetCompressor(pos) is not { } compressor)
             {
                 return;
             }
@@ -587,7 +418,7 @@ namespace AvaritiaMod
         {
             Point16 pos = new(reader.ReadInt16(), reader.ReadInt16());
             Item item = ItemIO.Receive(reader, readStack: true, readFavorite: true);
-            if (GetCollector(pos) is not { } collector)
+            if (!CanEditBlockData(whoAmI, pos) || GetCollector(pos) is not { } collector)
             {
                 return;
             }
@@ -724,7 +555,7 @@ namespace AvaritiaMod
             }
             player.Hurt(PlayerDeathReason.ByProjectile(playerIndex, projectileIndex), damage, hitDirection, pvp);
         }
-        // ---------------------------------------------------------------- 星空球体
+        // ---------------------------------------------------------------- 宇宙球体
         private static void HandleRequestCosmicSphere(BinaryReader reader, int whoAmI)
         {
             int playerIndex = reader.ReadInt32();
@@ -733,6 +564,15 @@ namespace AvaritiaMod
             int startTime = reader.ReadInt32();
             ushort timer = reader.ReadUInt16();
             bool attack = reader.ReadBoolean();
+            //服务端只认发包含法玩家：包里的下标由客户端提供，不能作为权威
+            if (Main.netMode == NetmodeID.Server)
+            {
+                if (GetRequestPlayer(whoAmI) is null)
+                {
+                    return;
+                }
+                playerIndex = whoAmI;
+            }
             if (ValidPlayerIndex(playerIndex) && Main.player[playerIndex].TryGetModPlayer(out AvaritiaPlayer modPlayer))
             {
                 modPlayer.CosmicSphereSuit = suit;
@@ -782,6 +622,11 @@ namespace AvaritiaMod
         private static void HandleBroadcastCosmicSphereStates(BinaryReader reader)
         {
             int count = reader.ReadInt32();
+            //上界校验：伪造包里的 count 会让读取越界
+            if (count is <= 0 or > Main.maxPlayers)
+            {
+                return;
+            }
             for (int i = 0; i < count; i++)
             {
                 int idx = reader.ReadInt32();
@@ -795,61 +640,6 @@ namespace AvaritiaMod
                 mp.CosmicSphereActive = active;
                 mp.CosmicSphereStartTime = startTime;
                 mp.CosmicSphereTimer = timer;
-            }
-        }
-        // ---------------------------------------------------------------- 手持物品形态（按玩家同步）
-        private static void HandleItemModeRequest(BinaryReader reader, int whoAmI)
-        {
-            byte mode = reader.ReadByte();
-            if (!ValidPlayerIndex(whoAmI))
-            {
-                return;
-            }
-            Main.player[whoAmI].GetModPlayer<AvaritiaPlayer>().HeldItemMode = mode;
-            ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.SyncItemMode);
-            packet.Write((byte)whoAmI);
-            packet.Write(mode);
-            packet.Send(ignoreClient: whoAmI);
-        }
-        private static void HandleItemModeBroadcast(BinaryReader reader)
-        {
-            int playerIndex = reader.ReadByte();
-            byte mode = reader.ReadByte();
-            if (!ValidPlayerIndex(playerIndex))
-            {
-                return;
-            }
-            Main.player[playerIndex].GetModPlayer<AvaritiaPlayer>().HeldItemMode = mode;
-        }
-        private static void HandleRequestItemModes(int whoAmI)
-        {
-            if (!ValidPlayerIndex(whoAmI))
-            {
-                return;
-            }
-            ModPacket response = NewPacket(AvaritiaMod.SyncMessageType.BroadcastItemModes);
-            response.Write(Main.maxPlayers);
-            for (int i = 0; i < Main.maxPlayers; i++)
-            {
-                Player plr = Main.player[i];
-                byte mode = plr is { active: true } ? plr.GetModPlayer<AvaritiaPlayer>().HeldItemMode : (byte)0;
-                response.Write((byte)i);
-                response.Write(mode);
-            }
-            response.Send(whoAmI);
-        }
-        private static void HandleItemModesSnapshot(BinaryReader reader)
-        {
-            int count = reader.ReadInt32();
-            for (int i = 0; i < count; i++)
-            {
-                int playerIndex = reader.ReadByte();
-                byte mode = reader.ReadByte();
-                if (!ValidPlayerIndex(playerIndex))
-                {
-                    continue;
-                }
-                Main.player[playerIndex].GetModPlayer<AvaritiaPlayer>().HeldItemMode = mode;
             }
         }
     }

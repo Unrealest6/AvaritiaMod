@@ -1,5 +1,6 @@
-﻿namespace AvaritiaMod.Content.Buffs
+namespace AvaritiaMod.Content.Buffs
 {
+    /// <summary>天能充盈：饱腹类增益，提升防御、伤害、暴击、攻速、移速与护甲穿透等属性。</summary>
     public sealed class CelestiallyCharged2 : ModBuff
     {
         public override void SetStaticDefaults()

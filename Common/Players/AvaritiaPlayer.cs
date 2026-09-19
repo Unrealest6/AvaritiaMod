@@ -71,22 +71,14 @@ namespace AvaritiaMod.Common.Players
         /// </summary>
         internal bool SwordOfTheCosmosAttack { get; set; }
         /// <summary>
-        /// 本玩家手持物品的形态，仅用于“其它客户端绘制该玩家的手持物品”。
-        /// <para>形态本身保存在物品实例上（<see cref="AvaritiaModeGlobalItem"/>）；
-        /// 远程玩家的物品实例数据不一定同步到本地，而他们身上唯一会被看到的物品就是手持物，
-        /// 因此按玩家缓存一份最近同步值即可。</para>
+        /// 取指定玩家手持的该类型物品实例的形态（类型不匹配时返回 0）。
+        /// <para>形态本身保存在物品实例自己的 ModItem 上（<see cref="FrameItem.Mode"/>），
+        /// 由库里的 <see cref="FrameItem"/> 负责存档与联机同步。</para>
         /// </summary>
-        internal byte HeldItemMode { get; set; }
-        /// <summary>
-        /// 最近一次同步出去的手持实例。用于“玩家换到另一把同款工具”时补发形态——
-        /// 只在切换形态时发包的话，其它客户端会把上一个实例的形态一直沿用下去。
-        /// </summary>
-        internal Item? LastSyncedHeldItem { get; set; }
-        /// <summary>取指定玩家手持的该类型物品实例的形态（类型不匹配时返回 0）。</summary>
         internal static byte GetItemMode(Player player, int itemType)
         {
             Item heldItem = player.HeldItem;
-            return heldItem is not null && heldItem.type == itemType ? AvaritiaModeGlobalItem.GetMode(heldItem) : (byte)0;
+            return heldItem is not null && heldItem.type == itemType ? FrameItem.GetItemMode(heldItem) : (byte)0;
         }
         /// <summary>
         /// 玩家是否看过第一次穿戴无尽全套的动画
@@ -110,9 +102,7 @@ namespace AvaritiaMod.Common.Players
             _lastSuit = false;
             if (Main.netMode != NetmodeID.SinglePlayer)
             {
-                //把手持物品的形态推给服务端（供其它客户端绘制），并拉取其它玩家的形态
-                AvaritiaNet.SendItemMode(AvaritiaModeGlobalItem.GetMode(Player.HeldItem));
-                AvaritiaNet.RequestItemModes();
+                //进入世界时同步一次宇宙球体状态（手持物形态由库里的 FramePlayer 负责）
                 AvaritiaNet.RequestCosmicSphereStates();
             }
         }
@@ -120,7 +110,7 @@ namespace AvaritiaMod.Common.Players
         {
             if (Player.whoAmI == Main.myPlayer)
             {
-                //当玩家被无尽剑攻击但生命值达到最大时则取消无尽剑攻击的特判
+                //生命值回满后清除被无尽剑攻击的标记
                 if (SwordOfTheCosmosAttack && Player.statLife == Player.statLifeMax2)
                 {
                     SwordOfTheCosmosAttack = false;
@@ -192,7 +182,7 @@ namespace AvaritiaMod.Common.Players
             CosmicSphereTimer = (ushort)MathHelper.Clamp(elapsed, 0, 540);
         }
         /// <summary>
-        /// 玩家死亡前处理，在玩家穿戴无尽全套并且没有被无尽剑攻击时返回false阻止死亡
+        /// 玩家死亡前处理：穿戴无尽全套且未被无尽剑攻击时返回 false 阻止死亡
         /// </summary>
         /// <param name="damage"></param>
         /// <param name="hitDirection"></param>
@@ -200,19 +190,19 @@ namespace AvaritiaMod.Common.Players
         /// <param name="playSound"></param>
         /// <param name="genDust"></param>
         /// <param name="damageSource"></param>
-        /// <returns></returns>
         public override bool PreKill(double damage, int hitDirection, bool pvp, ref bool playSound, ref bool genDust, ref PlayerDeathReason damageSource)
             => (!CosmicSphereSuit || damageSource.SourceProjectileType == ModContent.ProjectileType<SwordOfTheCosmosProj>())
             && base.PreKill(damage, hitDirection, pvp, ref playSound, ref genDust, ref damageSource);
         public override void SaveData(TagCompound tag)
         {
-            //保存玩家是否看过动画的数据到玩家数据中
-            //（物品形态存在物品实例上，由 GlobalItem.SaveData 负责，这里不再重复保存）
+            //物品形态存在物品实例上（由 GlobalItem.SaveData 负责），这里只存动画记录
             tag["HasSeenCosmicSphereIntro"] = _hasSeenCosmicSphereIntro;
         }
+        /// <summary>
+        /// 读取玩家是否看过动画的数据
+        /// </summary>
         public override void LoadData(TagCompound tag)
         {
-            //读取玩家是否看过动画的数据
             _hasSeenCosmicSphereIntro = tag.GetBool("HasSeenCosmicSphereIntro");
         }
         /// <summary>

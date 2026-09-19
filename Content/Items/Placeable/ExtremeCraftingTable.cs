@@ -1,10 +1,8 @@
-﻿using AvaritiaMod.Content.Items;
-
-namespace AvaritiaMod.Content.Items.Placeable
+﻿namespace AvaritiaMod.Content.Items.Placeable
 {
     public sealed class ExtremeCraftingTable : CraftingTableItem
     {
-        protected override byte GridSize => 9;
+        protected override BoundedSize GridSize => 9;
         protected override int TileType => ModContent.TileType<ExtremeCraftingTableTile>();
         protected override string TagMaxStack => "ExtremeCraftingTableMaxStack";
         protected override string TagItems => "ExtremeCraftingTableItems";

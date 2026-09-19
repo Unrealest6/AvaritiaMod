@@ -16,18 +16,13 @@ namespace AvaritiaMod.Common.UI
                 NeutronCollectorTileEntity.SendOutputChange(parent.TileEntity.Position, Item.Clone());
                 return;
             }
-            //单机/服务端必须写回物块实体：否则 Update() 每帧又把实体里的旧物品套回槽位，
-            //玩家刚取走的物品会被“复原”，相当于复制输出。
+            //单机/服务端必须写回实体，否则 Update() 会把实体里的旧物品套回槽位，等于复制输出。
             parent.TileEntity.OutputItem = Item.Clone();
         }
         public override void Update(GameTime gameTime)
         {
-            if (Main.netMode == NetmodeID.SinglePlayer)
+            if (Main.netMode != NetmodeID.MultiplayerClient && Parent.Parent is NeutronCollectorUI parent)
             {
-                if (Parent.Parent is not NeutronCollectorUI parent)
-                {
-                    return;
-                }
                 SetItemSilently(parent.TileEntity.OutputItem);
             }
             base.Update(gameTime);

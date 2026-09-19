@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.UI
+namespace AvaritiaMod.Common.UI
 {
     /// <summary>
     /// 终极工作台UI组件
@@ -25,7 +25,7 @@
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            //终极工作台标题颜色渐变
+            //标题每帧按彩虹渐变着色
             Title?.SetText(Lang.GetItemNameValue(ModContent.ItemType<ExtremeCraftingTable>()).ApplyGradient(ModContent.GetInstance<AvaritiaMod>().Name + "Rainbow"));
         }
     }

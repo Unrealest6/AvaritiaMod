@@ -1,4 +1,4 @@
-﻿namespace AvaritiaMod.Common.AvaritiaUtils
+namespace AvaritiaMod.Common.AvaritiaUtils
 {
     /// <summary>
     /// 宇宙粒子
@@ -10,7 +10,7 @@
         /// </summary>
         private readonly List<StarParticle> _particles = [];
         /// <summary>
-        /// 更新和绘制全部粒子
+        /// 每帧追加若干新粒子，然后更新并绘制全部粒子
         /// </summary>
         /// <param name="spriteBatch"></param>
         /// <param name="center">粒子环绕中心位置</param>
@@ -87,7 +87,7 @@
         /// </summary>
         private float _rotation;
         /// <summary>
-        /// 构造方法，用于创建粒子实例
+        /// 按球面坐标（角度 + 高度系数）在 <paramref name="center"/> 周围生成一个向外飞散的粒子
         /// </summary>
         /// <param name="center">环绕中心位置</param>
         /// <param name="radius">覆盖半径大小</param>

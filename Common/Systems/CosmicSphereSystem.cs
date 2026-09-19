@@ -53,11 +53,11 @@ namespace AvaritiaMod.Common.Systems
         private const int BlackHoleTime = 5;
         private static readonly EffectParameter?[] _blackHoleParams = new EffectParameter?[6];
         /// <summary>
-        /// 球体光晕贴图（加载时取一次，原实现每帧 ModContent.Request）
+        /// 球体光晕贴图（加载时取一次，避免绘制时反复请求资源）
         /// </summary>
         private static Texture2D? _haloTexture;
         /// <summary>
-        /// 球体绘制用的混合状态（复数）——原实现每次绘制都 <c>new BlendState</c>。
+        /// 球体绘制用的混合状态（只创建一次，避免每次绘制都 <c>new BlendState</c>）
         /// </summary>
         private static BlendState? _sphereBlend;
         public override void Load()
@@ -66,7 +66,7 @@ namespace AvaritiaMod.Common.Systems
             {
                 return;
             }
-            //加载两个着色器以及初始化顶点和索引
+            //加载着色器、光晕贴图并建立网格缓冲区
             CosmicSphereEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/CosmicShader3D", AssetRequestMode.ImmediateLoad).Value;
             BlackHoleEffect = ModContent.Request<Effect>("AvaritiaMod/Assets/Effects/BlackHole", AssetRequestMode.ImmediateLoad).Value;
             _haloTexture = ModContent.Request<Texture2D>("AvaritiaMod/Assets/Textures/Halo", AssetRequestMode.ImmediateLoad).Value;
@@ -98,10 +98,8 @@ namespace AvaritiaMod.Common.Systems
         }
         public override void Unload()
         {
-            //释放资源
             On_FilterManager.EndCapture -= OnFilterManagerEndCapture;
-            //静态 Effect / 参数句柄 / 贴图引用必须在 Unload 清空，
-            //否则模组重载后仍会被绘制路径当作有效资源使用。
+            //静态 Effect / 参数句柄 / 贴图引用必须在 Unload 清空，否则模组重载后仍会被绘制路径当作有效资源使用。
             BlackHoleEffect = null;
             CosmicSphereEffect = null;
             _haloTexture = null;
@@ -157,7 +155,7 @@ namespace AvaritiaMod.Common.Systems
         }
         private void OnFilterManagerEndCapture(On_FilterManager.orig_EndCapture orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Color clearColor)
         {
-            //服务端不绘制任何东西（原实现没有这层保护）
+            //专用服务端没有 GraphicsDevice，不能进入绘制路径
             if (Main.dedServ)
             {
                 orig(self, finalTexture, screenTarget1, screenTarget2, clearColor);
@@ -235,7 +233,7 @@ namespace AvaritiaMod.Common.Systems
             }
         }
         /// <summary>
-        /// 绘制宇宙球体
+        /// 绘制宇宙球体的粒子、光晕与闪电层
         /// </summary>
         /// <param name="player">玩家实例</param>
         /// <param name="modPlayer">ModPlayer实例</param>
@@ -271,7 +269,7 @@ namespace AvaritiaMod.Common.Systems
             spriteBatch.End();
         }
         /// <summary>
-        /// 绘制宇宙球体
+        /// 绘制宇宙球体的立体网格
         /// </summary>
         /// <param name="player">玩家实例</param>
         /// <param name="alpha">透明度</param>

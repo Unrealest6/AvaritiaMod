@@ -22,7 +22,6 @@ global using System;
 global using System.Collections.Generic;
 global using System.IO;
 global using System.Linq;
-global using System.Reflection;
 global using Terraria;
 global using Terraria.Audio;
 global using Terraria.DataStructures;
@@ -38,6 +37,7 @@ global using Terraria.ModLoader.IO;
 global using Terraria.ObjectData;
 global using Terraria.UI;
 global using Terraria.UI.Chat;
+global using static EternalLib.EternalLog;
 global using Color = Microsoft.Xna.Framework.Color;
 global using Item = Terraria.Item;
 global using Main = Terraria.Main;
@@ -49,42 +49,36 @@ namespace AvaritiaMod
     public sealed class AvaritiaMod : Mod
     {
         /// <summary>
-        /// 模组自定义消息类型。
-        /// <para><b>顺序即协议</b>：新增类型只能追加到末尾，否则会让新旧版本之间的包错位。</para>
+        /// 模组自有协议版本：随每个包写入，接收时校验，不一致的包直接丢弃。
+        /// <para>改包格式（增删字段、改变字段宽度）时必须递增，否则新旧版本混用会静默错位。</para>
+        /// </summary>
+        public const byte ProtocolVersion = 1;
+        /// <summary>
+        /// 模组自定义消息类型。<b>数值即协议</b>：每个成员都写死数值，不要复用或重排既有数值
+        /// （新增消息请追加新数值）。通用的物块破坏 / 抹墙 / 结算与手持物形态同步在 <see cref="EternalNet"/>。
         /// </summary>
         public enum SyncMessageType : byte
         {
-            RequestKillPlayer,
-            BroadcastKillPlayer,
-            RequestHurtPlayer,
-            BroadcastHurtPlayer,
-            BroadcastWholeTable,
-            SyncSlot,
-            ServerKillTile,
-            RequestCompressorInput,
-            BroadcastCompressor,
-            RequestCompressorOutput,
-            BroadcastCollector,
-            RequestCollectorOutput,
-            RequestCosmicSphere,
-            RequestKillNPC,
-            BroadcastKillNPC,
-            RequestCosmicSphereStates,
-            BroadcastCosmicSphereStates,
-            /// <summary>物品形态：客户端→服务端（itemType, mode）／服务端→客户端（whoAmI, itemType, mode）</summary>
-            SyncItemMode,
-            /// <summary>客户端请求服务端回传所有玩家的物品形态</summary>
-            RequestItemModes,
-            /// <summary>服务端回传所有玩家的物品形态快照</summary>
-            BroadcastItemModes,
-            /// <summary>客户端请求服务端清空并破坏箱子（范围挖掘用）</summary>
-            RequestChestBreak,
+            RequestKillPlayer = 0,
+            BroadcastKillPlayer = 1,
+            RequestHurtPlayer = 2,
+            BroadcastHurtPlayer = 3,
+            BroadcastWholeTable = 4,
+            SyncSlot = 5,
+            RequestCompressorInput = 6,
+            BroadcastCompressor = 7,
+            RequestCompressorOutput = 8,
+            BroadcastCollector = 9,
+            RequestCollectorOutput = 10,
+            RequestCosmicSphere = 11,
+            RequestKillNPC = 12,
+            BroadcastKillNPC = 13,
+            RequestCosmicSphereStates = 14,
+            BroadcastCosmicSphereStates = 15,
             /// <summary>客户端上传工作台内容物（放置带物品的工作台时使用），服务端写入实体并广播</summary>
-            RequestWholeTable,
+            RequestWholeTable = 16,
             /// <summary>客户端请求服务端回传指定工作台的内容物</summary>
-            RequestTableData,
-            /// <summary>客户端批量请求服务端破坏物块（范围挖掘用，一次可携带多格坐标）</summary>
-            ServerKillTiles
+            RequestTableData = 17
         }
         public override void Load()
         {
@@ -98,6 +92,11 @@ namespace AvaritiaMod
             On_Player.Hurt_PlayerDeathReason_int_int_refHurtInfo_bool_bool_int_bool_float_float_float -= PlayerHurtHook;
             On_Player.Hurt_HurtInfo_bool -= PlayerHurtInfoHook;
         }
+        /// <summary>
+        /// 罐子随机奖励的兜底（原版 <c>WorldGen.SpawnThingsFromPot</c>）由库的 <c>EternalLib.SpawnThingsFromPotHook</c> 负责：
+        /// 库按责任人是否持有 <see cref="IAoeMiningTool"/> 判定，命中掉落交给该工具的 <see cref="IAoeMiningTool.DeliverDrops"/>
+        /// （本模组即合并成物质团），本模组不再注册静态钩子。
+        /// </summary>
         public override void PostSetupContent()
         {
             ColorGradient.Register(Name + "Rainbow",

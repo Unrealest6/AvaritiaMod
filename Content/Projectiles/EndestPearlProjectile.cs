@@ -239,7 +239,7 @@ namespace AvaritiaMod.Content.Projectiles
                     }
                     if (Main.netMode == NetmodeID.MultiplayerClient)
                     {
-                        AvaritiaNet.RequestServerKillTile(x, y, noItem: false);
+                        BreakHelper.RequestServerKillTile(x, y, noItem: false);
                         WorldGen.KillWall(x, y);
                         WorldGen.KillTile(x, y, noItem: true);
                         NetMessage.SendTileSquare(-1, x, y, 1);
@@ -338,7 +338,7 @@ namespace AvaritiaMod.Content.Projectiles
                     }
                     if (Main.netMode == NetmodeID.MultiplayerClient)
                     {
-                        AvaritiaNet.RequestServerKillTile(x, y, noItem: false);
+                        BreakHelper.RequestServerKillTile(x, y, noItem: false);
                         WorldGen.KillWall(x, y);
                         WorldGen.KillTile(x, y, noItem: true);
                         NetMessage.SendTileSquare(-1, x, y, 1);
