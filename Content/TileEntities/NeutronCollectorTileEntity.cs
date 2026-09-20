@@ -11,8 +11,6 @@ namespace AvaritiaMod.Content.TileEntities
         private int _syncCooldown;
         private int _lastSyncedType = -1;
         private int _lastSyncedStack = -1;
-        public static void SendOutputChange(Point16 tilePos, Item outputItem)
-            => AvaritiaNet.RequestCollectorOutput(tilePos, outputItem);
         public void SendWholeCollector(int toClient = -1)
             => AvaritiaNet.BroadcastTileEntity(this, AvaritiaMod.SyncMessageType.BroadcastCollector, toClient);
         public override bool IsTileValidForEntity(int x, int y)
@@ -35,7 +33,7 @@ namespace AvaritiaMod.Content.TileEntities
                 {
                     _lastSyncedType = OutputItem.type;
                     _lastSyncedStack = OutputItem.stack;
-                    _syncCooldown = 30;
+                    _syncCooldown = 21;
                     SendWholeCollector();
                 }
             }

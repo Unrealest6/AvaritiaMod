@@ -1,6 +1,4 @@
-﻿using AvaritiaMod.Content.Items;
-
-namespace AvaritiaMod.Content.Items.Weapons
+﻿namespace AvaritiaMod.Content.Items.Weapons
 {
     public sealed class LongbowOfTheHeavens : ModItem
     {

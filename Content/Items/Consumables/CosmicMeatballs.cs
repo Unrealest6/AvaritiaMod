@@ -1,6 +1,4 @@
-﻿using AvaritiaMod.Content.Items;
-
-namespace AvaritiaMod.Content.Items.Consumables
+﻿namespace AvaritiaMod.Content.Items.Consumables
 {
     public sealed class CosmicMeatballs : FrameItem
     {

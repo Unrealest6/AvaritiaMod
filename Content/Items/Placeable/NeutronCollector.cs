@@ -1,6 +1,4 @@
-﻿using AvaritiaMod.Content.Items;
-
-namespace AvaritiaMod.Content.Items.Placeable
+﻿namespace AvaritiaMod.Content.Items.Placeable
 {
     public sealed class NeutronCollector : ModItem
     {

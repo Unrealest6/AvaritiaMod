@@ -18,10 +18,6 @@ namespace AvaritiaMod.Content.TileEntities
         private int _lastProcessingType = -1;
         private int _lastProcessingStack = -1;
         private bool _lastWorking;
-        public static void SendInputChange(Point16 tilePos, Item inputItem)
-            => AvaritiaNet.RequestCompressorSlot(tilePos, inputItem, output: false);
-        public static void SendOutputChange(Point16 tilePos, Item outputItem)
-            => AvaritiaNet.RequestCompressorSlot(tilePos, outputItem, output: true);
         public void SendWholeCompressor(int toClient = -1)
             => AvaritiaNet.BroadcastTileEntity(this, AvaritiaMod.SyncMessageType.BroadcastCompressor, toClient);
         public override bool IsTileValidForEntity(int x, int y)

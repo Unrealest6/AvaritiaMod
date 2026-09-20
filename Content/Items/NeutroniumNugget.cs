@@ -1,6 +1,4 @@
-﻿using AvaritiaMod;
-
-namespace AvaritiaMod.Content.Items
+﻿namespace AvaritiaMod.Content.Items
 {
     public sealed class NeutroniumNugget : ModItem
     {

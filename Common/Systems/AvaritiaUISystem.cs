@@ -41,17 +41,16 @@ namespace AvaritiaMod.Common.Systems
         {
             //同一个物块再次打开时复用已有实例：新建实例会从实体重新读一次内容物，
             //而实体这一刻可能还是旧数据（界面里的改动尚未写回），玩家手上的物品会再出现一份。
-            if (CurrentUI is TUI && CurrentUI is ITileEntityUI<TEntity> bound && ReferenceEquals(bound.TileEntity, tileEntity))
+            if (CurrentUI is TUI and ITileEntityUI<TEntity> bound && ReferenceEquals(bound.TileEntity, tileEntity))
             {
                 ShowUITileEntity(tileEntity);
                 base.ShowUI();
                 _currentTilePos = new Point16(tileEntity.Position.X, tileEntity.Position.Y);
                 return;
             }
-            //TUI 必须真的是本系统的 UI 类型，否则 CreateInstance 的结果会转成 null
             if (Activator.CreateInstance(typeof(TUI), tileEntity) is not T ui)
             {
-                EternalLog.Error($"{typeof(TUI).Name} is not a valid UI for {GetType().Name}; the UI was not opened.");
+                Error($"{typeof(TUI).Name} is not a valid UI for {GetType().Name}; the UI was not opened.");
                 return;
             }
             CurrentUI = ui;
@@ -64,11 +63,13 @@ namespace AvaritiaMod.Common.Systems
         /// </summary>
         public override void HideUI()
         {
-            //关闭前把槽位内容写回实体 / 服务端：否则实体里的旧数据会在下次打开时把物品“变回来”
+            //关闭前把槽位内容写回实体 / 服务端，并丢弃未结束的槽位拖拽：
+            //否则实体里的旧数据会在下次打开时把物品“变回来”，残留的拖拽快照也会在下次交互时被套用
             if (CurrentUI is CraftingTableUI table)
             {
                 AvaritiaItemSlot.SyncSlotsOfParent(table);
             }
+            DragManager.MouseUp();
             _currentTilePos = null;
             base.HideUI();
         }

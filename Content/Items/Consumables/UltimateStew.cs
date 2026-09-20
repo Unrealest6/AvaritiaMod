@@ -1,6 +1,4 @@
-﻿using AvaritiaMod.Content.Buffs;
-
-namespace AvaritiaMod.Content.Items.Consumables
+﻿namespace AvaritiaMod.Content.Items.Consumables
 {
     public sealed class UltimateStew : ModItem
     {

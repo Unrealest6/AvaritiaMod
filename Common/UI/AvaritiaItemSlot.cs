@@ -6,10 +6,6 @@ namespace AvaritiaMod.Common.UI
     public sealed class AvaritiaItemSlot : AvaritiaInputSlot
     {
         /// <summary>
-        /// 上一次双击所在的帧号，用于抑制紧随其后的单击。
-        /// </summary>
-        private static ulong _lastDoubleClickFrame;
-        /// <summary>
         /// 选中配方时填充的所需材料列表，用于槽位提示与红色不足标记。
         /// </summary>
         public List<Item> ShowItems { get; set; } = [];
@@ -109,10 +105,7 @@ namespace AvaritiaMod.Common.UI
         /// <param name="evt"></param>
         public override void LeftClick(UIMouseEvent evt)
         {
-            if (Main.GameUpdateCount <= _lastDoubleClickFrame + 12)
-            {
-                return;
-            }
+            //刚回滚过的这一次点击要忽略：否则取消拖拽的那一下会立刻把物品又搬走，回滚等于没做。
             if (DragManager.IsInRollbackCooldown)
             {
                 return;
@@ -155,6 +148,7 @@ namespace AvaritiaMod.Common.UI
                 {
                     slot.Item.stack -= space;
                     Main.mouseItem.stack = Main.mouseItem.maxStack;
+                    FinishGather(parent, startStack);
                     return;
                 }
             }
@@ -179,18 +173,42 @@ namespace AvaritiaMod.Common.UI
                 {
                     inv.stack -= space;
                     Main.mouseItem.stack = Main.mouseItem.maxStack;
+                    FinishGather(parent, startStack);
                     return;
                 }
             }
+            FinishGather(parent, startStack);
+        }
+
+        /// <summary>
+        /// 双击收集的收尾：把被直接改动过的槽位立刻写回实体 / 服务端，并记录守恒日志。
+        /// <para>部分收集（鼠标装满）也必须走这里，否则这次修改只能等下一帧的变更检测写回，界面若中途关闭就会丢内容。</para>
+        /// </summary>
+        /// <param name="parent">工作台界面。</param>
+        /// <param name="startStack">收集前鼠标上的数量。</param>
+        private static void FinishGather(CraftingTableUI parent, int startStack)
+        {
             if (Main.mouseItem.stack == startStack)
             {
                 return;
             }
-            //直接改动过槽位，必须立刻写回实体 / 服务端（不能等下一帧的变更检测）
             SyncSlotsOfParent(parent);
             SoundEngine.PlaySound(SoundID.Grab);
-            _lastDoubleClickFrame = Main.GameUpdateCount;
             Recipe.FindRecipes();
+        }
+        /// <summary>诊断用：玩家背包（前 50 格）的物品总数。</summary>
+        private static int InventorySum()
+        {
+            int total = 0;
+            for (int i = 0; i < 50; i++)
+            {
+                Item inv = Main.LocalPlayer.inventory[i];
+                if (inv is { IsAir: false, stack: > 0 })
+                {
+                    total += inv.stack;
+                }
+            }
+            return total;
         }
         /// <summary>
         /// 处理右键单击逻辑

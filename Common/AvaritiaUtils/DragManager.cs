@@ -33,8 +33,22 @@ namespace AvaritiaMod.Common.AvaritiaUtils
         private static int _snapshotMaxStack;
         private static int _snapshotTotalAmount;
         private static bool _dragStarted;
+        /// <summary>本 tick 是否已经结算过一次拖拽（防止一帧内重复应用）。</summary>
+        private static bool _actedThisFrame;
+        private static ulong _lastActionFrame;
         public static bool OriginStacksContainsKey(AvaritiaItemSlot slot) => _originStacks.ContainsKey(slot);
+        /// <summary>诊断日志用：当前拖拽状态的一行描述。</summary>
+        public static string Describe()
+            => $"drag type={StartType} current={_currentDrag} started={_dragStarted} slots={_draggedSlots.Count} origins={_originStacks.Count} "
+                + $"snapshot={_snapshotType}x{_snapshotTotalAmount}/max{_snapshotMaxStack} startSlot={(StartSlot is null ? "null" : "set")} "
+                + $"justReleased={JustReleased} rollbackCooldown={IsInRollbackCooldown}";
         public static void MouseUp()
+        {
+            ResetState();
+            JustReleased = true;
+        }
+        /// <summary>清空拖拽状态（不改 <see cref="JustReleased"/>：新会话可以立刻开始）。</summary>
+        private static void ResetState()
         {
             _currentDrag = DragType.None;
             StartSlot = null;
@@ -42,25 +56,55 @@ namespace AvaritiaMod.Common.AvaritiaUtils
             _draggedSlots.Clear();
             _originStacks.Clear();
             _dragStarted = false;
-            JustReleased = true;
+            //快照必须一起作废：否则之后再来一次回滚，会把上一轮的旧数量和旧类型写到鼠标上
+            //（比当前多就是刷物品，比当前少就是凭空消失）。
+            _snapshotType = 0;
+            _snapshotMaxStack = 0;
+            _snapshotTotalAmount = 0;
         }
         public static void RollbackDrag()
         {
+            //没有任何槽位被这次拖拽改动过，就没有东西需要回滚。此时鼠标上的物品可能已被其它操作
+            //（中间那次单击 / 双击收集）拿走或替换，再拿旧快照覆盖鼠标就是凭空造出物品 / 抹掉物品。
+            if (_originStacks.Count == 0)
+            {
+                FinishRollback();
+                return;
+            }
+            int delta = (from slot in _originStacks.Keys let original = _originStacks[slot] let current = slot.Item.IsAir ? 0 : slot.Item.stack select current - original).Sum();
+            //回滚 = 槽位还原 + 把拖拽对槽位的净改动从鼠标上撤销（放进去了就还给鼠标，拿出去了就收回）。
+            //因此鼠标上必须仍是同类物品（或为空）且数量够用、装得下。不满足时放弃回滚、保持现状：
+            //宁可这次拖拽的结果留着，也不能凭空增删物品。
+            bool sameType = Main.mouseItem.IsAir
+                || Main.mouseItem.type == _snapshotType && Main.mouseItem.maxStack == _snapshotMaxStack;
+            int restore = Main.mouseItem.stack + delta;
+            if (!sameType || restore < 0 || restore > Math.Max(1, _snapshotMaxStack))
+            {
+                FinishRollback();
+                return;
+            }
             foreach (AvaritiaItemSlot slot in _originStacks.Keys)
             {
-                if (_originStacks.TryGetValue(slot, out int original))
-                {
-                    SetSlotStack(slot, original);
-                }
+                SetSlotStack(slot, _originStacks[slot]);
             }
-            Main.mouseItem.SetDefaults(_snapshotType);
-            Main.mouseItem.stack = _snapshotTotalAmount;
-            _currentDrag = DragType.None;
-            StartSlot = null;
-            StartType = DragType.None;
-            _draggedSlots.Clear();
-            _originStacks.Clear();
-            _dragStarted = false;
+            if (restore > 0)
+            {
+                if (Main.mouseItem.IsAir)
+                {
+                    Main.mouseItem.SetDefaults(_snapshotType);
+                }
+                Main.mouseItem.stack = restore;
+            }
+            else
+            {
+                Main.mouseItem.TurnToAir();
+            }
+            FinishRollback();
+        }
+        /// <summary>结束一次拖拽会话：清状态、进入回滚冷却期，并标记“刚抬起”（避免同一次操作被结算两次）。</summary>
+        private static void FinishRollback()
+        {
+            ResetState();
             _rollbackFrame = Main.GameUpdateCount;
             JustReleased = true;
         }
@@ -84,9 +128,15 @@ namespace AvaritiaMod.Common.AvaritiaUtils
             {
                 return;
             }
-            if (Main.mouseItem.IsAir || IsDragging)
+            if (Main.mouseItem.IsAir)
             {
                 return;
+            }
+            //残留的上一轮会话先清掉：否则快照与原始堆叠都是旧的，
+            //之后回滚会把旧数据写回槽位（物品凭空多出来 / 丢失）
+            if (StartSlot is not null || IsDragging)
+            {
+                ResetState();
             }
             StartType = type;
             StartSlot = slot;
@@ -110,10 +160,26 @@ namespace AvaritiaMod.Common.AvaritiaUtils
                 MouseUp();
                 return;
             }
+            //这次分堆只允许搬“鼠标上仍是开始拖拽时的那份物品”。快速左右键连点时，中间的那次单击
+            //可能已经把鼠标物品放进槽位、并让鼠标换成了别的物品；此时继续分堆会按快照类型造物
+            //却从鼠标里扣掉另一种物品。注意：鼠标被分完（air）是正常情况，会话必须保留，
+            //否则按住左键拖拽时按中键 / 右键就没得回滚了。
+            if (!Main.mouseItem.IsAir
+                && (Main.mouseItem.type != _snapshotType || Main.mouseItem.maxStack != _snapshotMaxStack))
+            {
+                return;
+            }
             if (slot == StartSlot || !CanSlotAccept(slot.Item))
             {
                 return;
             }
+            //同一 tick 内只结算一次：绘制可能一帧被调用多次，重复结算会让同一次拖拽被应用两遍
+            if (_actedThisFrame && Main.GameUpdateCount == _lastActionFrame)
+            {
+                return;
+            }
+            _actedThisFrame = true;
+            _lastActionFrame = Main.GameUpdateCount;
             if (!_dragStarted)
             {
                 _dragStarted = true;
@@ -157,6 +223,19 @@ namespace AvaritiaMod.Common.AvaritiaUtils
             {
                 _originStacks[slot] = slot.Item.IsAir ? 0 : slot.Item.stack;
             }
+        }
+        /// <summary>诊断用：本次拖拽涉及的所有槽位 + 鼠标上的物品总数。</summary>
+        private static int DraggedTotal()
+        {
+            int total = Main.mouseItem.IsAir ? 0 : Main.mouseItem.stack;
+            foreach (AvaritiaItemSlot slot in _draggedSlots)
+            {
+                if (slot.Item is { IsAir: false, stack: > 0 })
+                {
+                    total += slot.Item.stack;
+                }
+            }
+            return total;
         }
         private static bool CanSlotAccept(Item slotItem) => slotItem.IsAir || slotItem.type == _snapshotType && slotItem.stack < _snapshotMaxStack;
         private static bool CanAcceptNewSlot(AvaritiaItemSlot candidate)

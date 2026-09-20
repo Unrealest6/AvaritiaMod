@@ -52,7 +52,7 @@ namespace AvaritiaMod
         /// 模组自有协议版本：随每个包写入，接收时校验，不一致的包直接丢弃。
         /// <para>改包格式（增删字段、改变字段宽度）时必须递增，否则新旧版本混用会静默错位。</para>
         /// </summary>
-        public const byte ProtocolVersion = 1;
+        public const byte ProtocolVersion = 2;
         /// <summary>
         /// 模组自定义消息类型。<b>数值即协议</b>：每个成员都写死数值，不要复用或重排既有数值
         /// （新增消息请追加新数值）。通用的物块破坏 / 抹墙 / 结算与手持物形态同步在 <see cref="EternalNet"/>。
@@ -78,7 +78,13 @@ namespace AvaritiaMod
             /// <summary>客户端上传工作台内容物（放置带物品的工作台时使用），服务端写入实体并广播</summary>
             RequestWholeTable = 16,
             /// <summary>客户端请求服务端回传指定工作台的内容物</summary>
-            RequestTableData = 17
+            RequestTableData = 17,
+            /// <summary>客户端请求对压缩机 / 收集器槽位执行一次动作（放入 / 取出 / 丢弃 / 交换），数量由服务端结算</summary>
+            RequestCompressorAction = 18,
+            /// <summary>服务端回发“客户端应如何调整鼠标上的物品”（放入时扣除、取出 / 合成时交付）</summary>
+            SyncCompressorCursor = 19,
+            /// <summary>客户端请求合成（数量与材料消耗由服务端按自己的槽位结算，产物回发到鼠标）</summary>
+            RequestCraft = 20
         }
         public override void Load()
         {

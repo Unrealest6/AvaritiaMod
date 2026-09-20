@@ -1,6 +1,4 @@
-﻿using AvaritiaMod;
-
-namespace AvaritiaMod.Content.TileEntities
+﻿namespace AvaritiaMod.Content.TileEntities
 {
     public sealed class ExtremeCraftingTableTileEntity : CraftingTableTileEntity
     {

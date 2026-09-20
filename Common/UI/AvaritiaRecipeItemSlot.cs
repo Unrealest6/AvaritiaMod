@@ -17,14 +17,11 @@ namespace AvaritiaMod.Common.UI
         /// 配方尺寸（边长，单位：槽位）
         /// </summary>
         private readonly BoundedSize _size;
-        /// <summary>
-        /// 所属工作台界面（首次访问时沿父链解析并缓存）。
-        /// </summary>
-        private CraftingTableUI? _owner;
+
         /// <summary>
         /// 所属工作台界面；高亮状态由它统一持有。
         /// </summary>
-        private CraftingTableUI? Owner => _owner ??= Parent?.Parent?.Parent?.Parent as CraftingTableUI;
+        private CraftingTableUI? Owner => field ??= Parent?.Parent?.Parent?.Parent as CraftingTableUI;
         /// <summary>
         /// 统计背包前 50 格中每种物品的总量与所在格索引队列，供自动分配材料时查找和扣除。
         /// </summary>
@@ -231,7 +228,8 @@ namespace AvaritiaMod.Common.UI
             {
                 return null;
             }
-            result.stack = amount;
+            //只返回真正取到的数量：若池中不足 amount，多出来的部分会是凭空生成的物品。
+            result.stack = collected;
             return result;
         }
         /// <summary>
@@ -378,7 +376,7 @@ namespace AvaritiaMod.Common.UI
             Dictionary<int, (int total, Queue<int> indices)> backpack = ScanBackpack();
             DistributeIngredients(backpack);
             //自动填装直接改动了槽位（也改动了背包），立刻把槽位写回实体 / 服务端
-            if (Owner is { } parent && parent.Slots is not null)
+            if (Owner is { Slots: not null } parent)
             {
                 AvaritiaItemSlot.SyncSlotsOfParent(parent);
             }
@@ -569,7 +567,7 @@ namespace AvaritiaMod.Common.UI
                         int type = group.Key;
                         List<(int x, int y, int need, int maxStack)> positions = [.. group.Select(a => (a.x, a.y, a.need, a.maxStack))];
                         int totalAvailable = originalAvailable.GetValueOrDefault(type);
-                        SmartDistributeSingleType(type, positions, totalAvailable, totalPool.GetValueOrDefault(type, []));
+                        SmartDistributeSingleType(positions, totalAvailable, totalPool.GetValueOrDefault(type, []));
                     }
                 }
                 else
@@ -580,7 +578,7 @@ namespace AvaritiaMod.Common.UI
                         List<(int x, int y, int need, int maxStack)> positions = group.Value;
                         int totalNeed = totalNeeded[type];
                         int totalToDistribute = totalNeed * maxCrafts;
-                        SmartDistributeSingleType(type, positions, totalToDistribute, totalPool.GetValueOrDefault(type, []));
+                        SmartDistributeSingleType(positions, totalToDistribute, totalPool.GetValueOrDefault(type, []));
                     }
                 }
             }
@@ -615,7 +613,7 @@ namespace AvaritiaMod.Common.UI
                     int type = group.Key;
                     List<(int x, int y, int need, int maxStack)> positions = [.. group.Select(a => (a.x, a.y, a.need, a.maxStack))];
                     int totalAvailable = originalAvailable.GetValueOrDefault(type);
-                    SmartDistributeSingleType(type, positions, totalAvailable, totalPool.GetValueOrDefault(type, []));
+                    SmartDistributeSingleType(positions, totalAvailable, totalPool.GetValueOrDefault(type, []));
                 }
             }
             foreach (Item? item in from items in totalPool.Values from item in items where item.stack > 0 select item)
@@ -623,14 +621,14 @@ namespace AvaritiaMod.Common.UI
                 SafeReturnToInventory(item);
             }
         }
+
         /// <summary>
         /// 把单一类型材料按各槽位需求比例分配（受槽位最大堆叠限制），并从物品池取物放入槽位。
         /// </summary>
-        /// <param name="type">材料类型 ID。</param>
         /// <param name="positions">需要该材料的槽位（坐标、单份需求、最大堆叠）。</param>
         /// <param name="totalAvailable">该材料可用总量。</param>
         /// <param name="pool">该材料的物品池。</param>
-        private void SmartDistributeSingleType(int type, List<(int x, int y, int need, int maxStack)> positions, int totalAvailable, List<Item> pool)
+        private void SmartDistributeSingleType(List<(int x, int y, int need, int maxStack)> positions, int totalAvailable, List<Item> pool)
         {
             if (Owner is not { } parent)
             {
@@ -679,7 +677,11 @@ namespace AvaritiaMod.Common.UI
                 }
                 (int x, int y, _, _) = positions[i];
                 Item? taken = TakeFromList(pool, target[i]);
-                parent.Slots?[x, y].Item = taken ?? new Item(type, target[i]);
+                //池中不足时宁可少放，也不要用 new Item(...) 凭空补足（那会直接复制出材料）。
+                if (taken is { IsAir: false, stack: > 0 })
+                {
+                    parent.Slots?[x, y].Item = taken;
+                }
             }
         }
     }

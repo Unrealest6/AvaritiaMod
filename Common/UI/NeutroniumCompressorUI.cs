@@ -139,6 +139,11 @@ namespace AvaritiaMod.Common.UI
             }
             Element.Left = TileEntity.Styles[0];
             Element.Top = TileEntity.Styles[1];
+            //联机下打开界面时主动要一次真实状态：本地镜像可能停在上一次广播，显示会过期。
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+            {
+                AvaritiaNet.RequestCompressorAction(TileEntity.Position, output: false, AvaritiaNet.CompressorAction.Resync, new Item());
+            }
         }
         /// <summary>
         /// UI 关闭时调用。将当前面板位置保存到物块实体。

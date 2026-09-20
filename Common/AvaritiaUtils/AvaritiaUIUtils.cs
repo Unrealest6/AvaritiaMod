@@ -6,15 +6,54 @@ namespace AvaritiaMod.Common.AvaritiaUtils
     public static class AvaritiaUIUtils
     {
         /// <summary>
+        /// 背包（前 50 格）还能装下多少个该物品：先算同类堆叠的剩余空间，再算空格整叠容量。
+        /// <para>联机时服务端用它判断“送背包”是否放得下（放不下就不该消耗 / 不该取走）。</para>
+        /// </summary>
+        /// <param name="player">目标玩家。</param>
+        /// <param name="item">要放入的物品（按 type / maxStack 判定）。</param>
+        /// <returns>能放下的数量（不超过 <paramref name="item"/> 自身的数量）。</returns>
+        public static int FitAmount(Player player, Item item)
+        {
+            if (item is null || item.IsAir || item.stack <= 0)
+            {
+                return 0;
+            }
+            int max = Math.Max(1, item.maxStack);
+            int space = 0;
+            for (int i = 0; i < 50 && space < item.stack; i++)
+            {
+                Item inv = player.inventory[i];
+                if (inv is null)
+                {
+                    continue;
+                }
+                if (inv.IsAir)
+                {
+                    space += max;
+                }
+                else if (inv.type == item.type && inv.maxStack == max)
+                {
+                    space += Math.Max(0, max - inv.stack);
+                }
+            }
+            return Math.Min(space, item.stack);
+        }
+        /// <summary>
         /// 将物品移入玩家背包，优先合并同种堆叠，否则放入空槽。
         /// </summary>
-        public static void MoveItemToPlayerInventory(Item source)
+        public static void MoveItemToPlayerInventory(Item source) => MoveItemToPlayerInventory(Main.LocalPlayer, source);
+        /// <summary>
+        /// 将物品移入指定玩家的背包（联机时服务端用，服务端才有权改写玩家背包）。
+        /// <para>背包装不下时不丢弃：余量留在 <paramref name="source"/> 里，由调用方决定掉落。</para>
+        /// </summary>
+        /// <param name="player">目标玩家。</param>
+        /// <param name="source">要移入的物品；放不下的部分会留在其中。</param>
+        public static void MoveItemToPlayerInventory(Player player, Item source)
         {
             if (source.IsAir != false)
             {
                 return;
             }
-            Player player = Main.LocalPlayer;
             for (int i = 0; i < 50 && !source.IsAir; i++)
             {
                 Item inv = player.inventory[i];
