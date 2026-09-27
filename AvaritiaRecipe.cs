@@ -14,6 +14,10 @@ namespace AvaritiaMod
         private static int _cachedDim;
         private static AvaritiaRecipe? _cachedRecipe;
         private static bool _cacheValid;
+        public Bounded<byte, RecipeSize> Size { get; }
+        public Item Result { get; }
+        public bool IsOrdered { get; }
+        private List<Item>[,] _ingredients;
         public static AvaritiaRecipe? FindMatchingRecipe(AvaritiaItemSlot[,]? slots)
         {
             if (slots is null)
@@ -27,15 +31,7 @@ namespace AvaritiaMod
                 return _cachedRecipe;
             }
             byte size = (byte)Math.Sqrt(slots.Length);
-            AvaritiaRecipe? result = null;
-            foreach (AvaritiaRecipe recipe in _recipes)
-            {
-                if (recipe.Size == size && !recipe.Result.IsAir && recipe.Matches(slots))
-                {
-                    result = recipe;
-                    break;
-                }
-            }
+            AvaritiaRecipe? result = _recipes.FirstOrDefault(recipe => recipe.Size == size && !recipe.Result.IsAir && recipe.Matches(slots));
             _cachedContents = SnapshotContents(slots, dim);
             _cachedDim = dim;
             _cachedRecipe = result;
@@ -93,11 +89,7 @@ namespace AvaritiaMod
             }
             return true;
         }
-        public BoundedSize Size { get; }
-        public Item Result { get; }
-        public bool IsOrdered { get; }
-        private List<Item>[,] _ingredients;
-        public AvaritiaRecipe(int type, BoundedSize size, int stack = 1, bool isOrdered = true)
+        public AvaritiaRecipe(int type, Bounded<byte, RecipeSize> size, int stack = 1, bool isOrdered = true)
         {
             Item item = new(type, stack);
             Result = item;
@@ -593,13 +585,9 @@ namespace AvaritiaMod
         public static implicit operator Ingredient(List<(int, int)> items) => new(items.Select(item => (item.Item1, item.Item2)));
         public static implicit operator Ingredient(List<Item> items) => new(items.Select(item => (item.type, item.stack)));
     }
-    public record struct BoundedSize
+    public readonly record struct RecipeSize : IBounded<byte>
     {
-        public const byte MinSize = 2;
-        public const byte MaxSize = 15;
-        private byte Size { get => Math.Clamp(field, MinSize, MaxSize); }
-        private BoundedSize(byte size) => Size = size;
-        public static implicit operator BoundedSize(byte size) => new(size);
-        public static implicit operator byte(BoundedSize boundedSize) => boundedSize.Size;
+        public static byte MinValue => 2;
+        public static byte MaxValue => 15;
     }
 }

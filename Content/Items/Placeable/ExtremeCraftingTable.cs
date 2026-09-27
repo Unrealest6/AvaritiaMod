@@ -2,7 +2,7 @@
 {
     public sealed class ExtremeCraftingTable : CraftingTableItem
     {
-        protected override BoundedSize GridSize => 9;
+        protected override Bounded<byte, RecipeSize> GridSize => 9;
         protected override int TileType => ModContent.TileType<ExtremeCraftingTableTile>();
         protected override string TagMaxStack => "ExtremeCraftingTableMaxStack";
         protected override string TagItems => "ExtremeCraftingTableItems";

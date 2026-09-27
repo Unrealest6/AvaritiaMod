@@ -11,7 +11,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         /// <param name="tileEntity">工作台物块实体实例</param>
         public ExtremeCraftingTableUI(CraftingTableTileEntity tileEntity) : base(tileEntity) { }
-        protected override BoundedSize Size => 9;
+        protected override Bounded<byte, RecipeSize> Size => 9;
         protected override Vector2 PanelSize => new(830, 528);
         protected override Vector2 ListSize => new(92, 480);
         protected override float ListHAlign => 0.72f;

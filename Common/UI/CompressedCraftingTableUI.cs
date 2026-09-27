@@ -11,7 +11,7 @@
         /// </summary>
         /// <param name="tileEntity">工作台物块实体实例</param>
         public CompressedCraftingTableUI(CraftingTableTileEntity tileEntity) : base(tileEntity) { }
-        protected override BoundedSize Size => 3;
+        protected override Bounded<byte, RecipeSize> Size => 3;
         protected override string TitleText => ModContent.GetModItem(ModContent.ItemType<CompressedCraftingTable>()).DisplayName.Value;
     }
 }

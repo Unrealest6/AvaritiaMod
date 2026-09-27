@@ -16,7 +16,7 @@ namespace AvaritiaMod.Common.UI
         /// <summary>
         /// 配方尺寸（边长，单位：槽位）
         /// </summary>
-        private readonly BoundedSize _size;
+        private readonly Bounded<byte, RecipeSize> _size;
 
         /// <summary>
         /// 所属工作台界面；高亮状态由它统一持有。

@@ -3,7 +3,7 @@ namespace AvaritiaMod.Content.Items.Placeable
     public abstract class CraftingTableItem : ModItem
     {
         internal Item[,]? Items { get; private set; }
-        protected abstract BoundedSize GridSize { get; }
+        protected abstract Bounded<byte, RecipeSize> GridSize { get; }
         protected abstract int TileType { get; }
         protected abstract string TagMaxStack { get; }
         protected abstract string TagItems { get; }

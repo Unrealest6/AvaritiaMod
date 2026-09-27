@@ -239,7 +239,7 @@ namespace AvaritiaMod.Common.UI
                 SoundEngine.PlaySound(SoundID.MenuTick);
                 return;
             }
-            AvaritiaUIUtils.MoveItemToPlayerInventory(Item);
+            Main.LocalPlayer.MoveItemToInventory(Item);
             OnItemChanged();
         }
         /// <summary>把槽位物品丢进垃圾桶。</summary>

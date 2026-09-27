@@ -136,7 +136,7 @@ namespace AvaritiaMod.Common.UI
             {
                 return;
             }
-            AvaritiaUIUtils.MoveItemToPlayerInventory(Item);
+            Main.LocalPlayer.MoveItemToInventory(Item);
             if (Item is not { IsAir: false, stack: > 0 })
             {
                 return;

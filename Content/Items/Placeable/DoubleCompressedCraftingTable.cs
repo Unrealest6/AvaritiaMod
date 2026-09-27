@@ -2,7 +2,7 @@
 {
     public sealed class DoubleCompressedCraftingTable : CraftingTableItem
     {
-        protected override BoundedSize GridSize => 6;
+        protected override Bounded<byte, RecipeSize> GridSize => 6;
         protected override int TileType => ModContent.TileType<DoubleCompressedCraftingTableTile>();
         protected override string TagMaxStack => "DoubleCompressedCraftingTableMaxStack";
         protected override string TagItems => "DoubleCompressedCraftingTableItems";

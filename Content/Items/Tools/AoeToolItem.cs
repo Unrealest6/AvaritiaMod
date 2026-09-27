@@ -16,14 +16,13 @@ namespace AvaritiaMod.Content.Items.Tools
         /// <para>表里的键是按物块类型索引的开关表（复用 tML 的 <c>TileID.Sets.Ore</c>），值是这一格的掉落加成；
         /// 想给别的物块也加倍，在这里加一条即可（如 <c>[TileID.Sets.CanBeDugByShovel] = new(2)</c>）。</para>
         /// </summary>
-        private static readonly Dictionary<bool[], Int32Modifier> ExtraDrops = new() { [TileID.Sets.Ore] = new(1) };
-        /// <inheritdoc/>
-        public IReadOnlyDictionary<bool[], Int32Modifier> ExtraDropModifier
+        private static readonly Dictionary<bool[], NumericModifier<int>> ExtraDrops = new() { [TileID.Sets.Ore] = new NumericModifier<int>(1) };
+        public IReadOnlyDictionary<bool[], NumericModifier<int>> ExtraDropModifier
         {
             get
             {
                 //每次读取现掷一次倍率（与“逐个掉落现掷”等价）
-                ExtraDrops[TileID.Sets.Ore] = new Int32Modifier(Main.rand.Next(4, 41));
+                ExtraDrops[TileID.Sets.Ore] = new NumericModifier<int>(Main.rand.Next(4, 41));
                 return ExtraDrops;
             }
         }

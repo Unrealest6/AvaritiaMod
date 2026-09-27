@@ -11,7 +11,7 @@
         /// </summary>
         /// <param name="tileEntity">工作台物块实体实例</param>
         public DoubleCompressedCraftingTableUI(CraftingTableTileEntity tileEntity) : base(tileEntity) { }
-        protected override BoundedSize Size => 6;
+        protected override Bounded<byte, RecipeSize> Size => 6;
         protected override Vector2 PanelSize => new(650, 364);
         protected override Vector2 ListSize => new(92, 320);
         protected override float ListHAlign => 0.65f;

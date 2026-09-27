@@ -3,7 +3,7 @@ namespace AvaritiaMod.Content.TileEntities
     public abstract class CraftingTableTileEntity : ModTileEntity
     {
         public Item[,]? Items { get; set; }
-        public abstract BoundedSize Size { get; }
+        public abstract Bounded<byte, RecipeSize> Size { get; }
         public abstract ushort TileType { get; }
         public virtual string ItemTag => FullName + "Items";
         public CraftingTableUI? CraftingTableUI { get; set; }

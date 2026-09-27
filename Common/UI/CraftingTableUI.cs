@@ -39,7 +39,7 @@ namespace AvaritiaMod.Common.UI
         /// <summary>
         /// 工作台合成槽尺寸
         /// </summary>
-        protected abstract BoundedSize Size { get; }
+        protected abstract Bounded<byte, RecipeSize> Size { get; }
         /// <summary>
         /// 主面板尺寸
         /// </summary>

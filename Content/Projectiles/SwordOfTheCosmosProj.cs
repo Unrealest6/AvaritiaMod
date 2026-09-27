@@ -411,16 +411,10 @@ namespace AvaritiaMod.Content.Projectiles
         {
             if (Main.netMode != NetmodeID.Server)
             {
-                if (Main.netMode == NetmodeID.SinglePlayer)
-                {
-                    target.NPCLoot();
-                }
                 if (target.HitSound != null)
                 {
                     SoundEngine.PlaySound(target.HitSound, target.position);
                 }
-                target.life = 0;
-                target.HitEffect(0, 0, true);
                 SoundStyle? legacySoundStyle = target.DeathSound;
                 if (target is { type: NPCID.Pirate, IsShimmerVariant: true })
                 {
@@ -430,7 +424,17 @@ namespace AvaritiaMod.Content.Projectiles
                 {
                     SoundEngine.PlaySound(legacySoundStyle, target.position);
                 }
-                if (Main.netMode == NetmodeID.MultiplayerClient && Projectile.owner == Main.myPlayer)
+                if (Main.netMode == NetmodeID.SinglePlayer)
+                {
+                    //单人：就地结算掉落与死亡。月亮领主这类多部件 Boss 会按本体（核心）结算，
+                    //否则命中的眼睛 / 手臂只会掉出药水之类的小掉落（见 InstaKillHelper）
+                    InstaKillHelper.KillAndLoot(target);
+                    return;
+                }
+                //多人：本地只演出死亡，掉落一律由服务端结算（服务端同样会按本体结算）
+                target.life = 0;
+                target.HitEffect(0, 0, true);
+                if (Projectile.owner == Main.myPlayer)
                 {
                     //由服务端执行掉落并广播击杀（AvaritiaNet.RequestKillNPC 内部只在多人客户端发包）
                     AvaritiaNet.RequestKillNPC(target.whoAmI);

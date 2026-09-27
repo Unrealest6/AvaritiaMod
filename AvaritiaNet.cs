@@ -388,12 +388,7 @@ namespace AvaritiaMod
             Point16 pos = new(reader.ReadInt16(), reader.ReadInt16());
             bool repeat = reader.ReadBoolean();
             bool toInventory = reader.ReadBoolean();
-            if (!CanEditBlockData(whoAmI, pos) || GetTable(pos) is not { } table || GetRequestPlayer(whoAmI) is not { } player)
-            {
-                SendCompressorAck(whoAmI, pos);
-                return;
-            }
-            if (table.Items is not { } items || items.GetLength(0) <= 0)
+            if (!CanEditBlockData(whoAmI, pos) || GetTable(pos) is not { } table || GetRequestPlayer(whoAmI) is not { } player || table.Items is not { } items || items.GetLength(0) <= 0)
             {
                 SendCompressorAck(whoAmI, pos);
                 return;
@@ -441,7 +436,7 @@ namespace AvaritiaMod
                 SendCompressorAck(whoAmI, pos);
                 return;
             }
-            if (toInventory && AvaritiaUIUtils.FitAmount(player, product) < product.stack)
+            if (toInventory && player.FitAmount(product) < product.stack)
             {
                 //Shift 合成要求产物能整个放进背包；放不下就这一次不合成（材料一点都不扣）
                 SendCompressorAck(whoAmI, pos, SoundTick);
@@ -673,7 +668,7 @@ namespace AvaritiaMod
                 case CompressorAction.TakeAllToInventory:
                     {
                         //Shift+点击：只取走背包放得下的部分，剩下的留在机器里（不能先取走再放不下，那样就凭空消失了）
-                        int fit = AvaritiaUIUtils.FitAmount(player, slot);
+                        int fit = player.FitAmount(slot);
                         if (fit <= 0)
                         {
                             //背包装不下：这一次不取（原版 Shift+点击放不下就是不生效），给个提示音
@@ -807,7 +802,7 @@ namespace AvaritiaMod
                 item.stack = Math.Min(count, item.stack);
                 if (toInventory)
                 {
-                    AvaritiaUIUtils.MoveItemToPlayerInventory(Main.LocalPlayer, item);
+                    Main.LocalPlayer.MoveItemToInventory(item);
                 }
                 else if (Main.mouseItem.IsAir)
                 {
@@ -823,11 +818,11 @@ namespace AvaritiaMod
                 }
                 if (item is { IsAir: false, stack: > 0 })
                 {
-                    AvaritiaUIUtils.MoveItemToPlayerInventory(Main.LocalPlayer, item);
+                    Main.LocalPlayer.MoveItemToInventory(item);
                 }
                 if (item is { IsAir: false, stack: > 0 })
                 {
-                    Main.LocalPlayer.QuickSpawnItem(Main.LocalPlayer.GetSource_Misc("AvaritiaCompressor"), item, item.stack);
+                    Main.LocalPlayer.QuickSpawnItem(item.GetSource_Loot(), item, item.stack);
                     item.TurnToAir();
                 }
             }
@@ -895,8 +890,8 @@ namespace AvaritiaMod
             {
                 return;
             }
-            npc.NPCLoot();
-            npc.life = 0;
+            //多部件 Boss（月亮领主）在这里同样按本体结算：客户端命中的是眼睛 / 手臂
+            InstaKillHelper.KillAndLoot(npc);
             ModPacket packet = NewPacket(AvaritiaMod.SyncMessageType.BroadcastKillNPC);
             packet.Write(npcIndex);
             packet.Send(ignoreClient: whoAmI);
