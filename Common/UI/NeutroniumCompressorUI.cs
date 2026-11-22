@@ -4,8 +4,24 @@ namespace AvaritiaMod.Common.UI
     /// 中子态素压缩机UI组件
     /// </summary>
     // ReSharper disable once ClassNeverInstantiated.Global
-    public sealed class NeutroniumCompressorUI : DragUIState<UIPanel>, ITileEntityUI<NeutroniumCompressorTileEntity>
+    public sealed class NeutroniumCompressorUI : UIState, IDraggablePanel<UIPanel>, ITileEntityUI<NeutroniumCompressorTileEntity>
     {
+        /// <summary>拖拽控制器（组合实现，见 <see cref="IDraggablePanel{T}"/>）。</summary>
+        public DragPanelController<UIPanel> DragPanel { get; }
+        /// <summary>供拖拽控制器访问框架成员（返回自身）。</summary>
+        public UIState State => this;
+        /// <summary>显示标记（实际存在 <see cref="DragPanel"/> 里）。</summary>
+        public bool Visible
+        {
+            get => DragPanel.Visible;
+            set => DragPanel.Visible = value;
+        }
+        /// <summary>可拖拽的根元素（实际存在 <see cref="DragPanel"/> 里）。</summary>
+        public UIPanel? Element
+        {
+            get => DragPanel.Element;
+            set => DragPanel.Element = value;
+        }
         /// <summary>
         /// 输入槽 UI 元素实例
         /// </summary>
@@ -57,6 +73,7 @@ namespace AvaritiaMod.Common.UI
         public NeutroniumCompressorUI(NeutroniumCompressorTileEntity tileEntity)
         {
             TileEntity = tileEntity;
+            DragPanel = new DragPanelController<UIPanel>(this);
             Element = new UIPanel();
         }
         /// <summary>
@@ -133,6 +150,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         public override void OnActivate()
         {
+            DragPanel.OnActivate();
             if (Element is null)
             {
                 return;
@@ -150,6 +168,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         public override void OnDeactivate()
         {
+            DragPanel.OnDeactivate();
             if (Element is null)
             {
                 return;
@@ -168,6 +187,8 @@ namespace AvaritiaMod.Common.UI
                 ModContent.GetInstance<NeutroniumCompressorUISystem>().HideUI();
             }
             base.Update(gameTime);
+            //原 DragUIState.Update 的逻辑：拖拽 / 回弹 / 贴边
+            DragPanel.Update();
             if (!TileEntity.ProcessingItem.IsAir && Singularity.Singularities.TryGetValue(TileEntity.ProcessingItem.type, out Singularity? singularity))
             {
                 _showInputSlot?.Item = new Item(TileEntity.ProcessingItem.type);

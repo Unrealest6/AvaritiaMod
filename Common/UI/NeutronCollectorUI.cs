@@ -4,8 +4,24 @@ namespace AvaritiaMod.Common.UI
     /// 中子态素收集器UI组件
     /// </summary>
     // ReSharper disable once ClassNeverInstantiated.Global
-    public sealed class NeutronCollectorUI : DragUIState<UIPanel>, ITileEntityUI<NeutronCollectorTileEntity>
+    public sealed class NeutronCollectorUI : UIState, IDraggablePanel<UIPanel>, ITileEntityUI<NeutronCollectorTileEntity>
     {
+        /// <summary>拖拽控制器（组合实现，见 <see cref="IDraggablePanel{T}"/>）。</summary>
+        public DragPanelController<UIPanel> DragPanel { get; }
+        /// <summary>供拖拽控制器访问框架成员（返回自身）。</summary>
+        public UIState State => this;
+        /// <summary>显示标记（实际存在 <see cref="DragPanel"/> 里）。</summary>
+        public bool Visible
+        {
+            get => DragPanel.Visible;
+            set => DragPanel.Visible = value;
+        }
+        /// <summary>可拖拽的根元素（实际存在 <see cref="DragPanel"/> 里）。</summary>
+        public UIPanel? Element
+        {
+            get => DragPanel.Element;
+            set => DragPanel.Element = value;
+        }
         /// <summary>
         /// 输出槽 UI 元素实例
         /// </summary>
@@ -29,7 +45,7 @@ namespace AvaritiaMod.Common.UI
         /// <summary>
         /// 直接拖动标题栏即可移动面板（无需按住 Shift，也不会先按到输出槽上）。
         /// </summary>
-        protected override UIElement? DragHandle => _title;
+        public UIElement? DragHandle => _title;
         /// <summary>
         /// 构造方法，使用反射构造
         /// </summary>
@@ -37,6 +53,7 @@ namespace AvaritiaMod.Common.UI
         public NeutronCollectorUI(NeutronCollectorTileEntity tileEntity)
         {
             TileEntity = tileEntity;
+            DragPanel = new DragPanelController<UIPanel>(this);
             Element = new UIPanel();
         }
         /// <summary>
@@ -85,6 +102,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         public override void OnActivate()
         {
+            DragPanel.OnActivate();
             if (Element is null)
             {
                 return;
@@ -97,6 +115,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         public override void OnDeactivate()
         {
+            DragPanel.OnDeactivate();
             if (Element is null)
             {
                 return;
@@ -115,6 +134,8 @@ namespace AvaritiaMod.Common.UI
                 ModContent.GetInstance<NeutronCollectorUISystem>().HideUI();
             }
             base.Update(gameTime);
+            //原 DragUIState.Update 的逻辑：拖拽 / 回弹 / 贴边
+            DragPanel.Update();
             _processText?.SetText("Process: " + (TileEntity.ProcessTimer / 21333f * 100f).ToString("F1") + "%");
         }
     }

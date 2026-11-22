@@ -142,6 +142,7 @@ namespace AvaritiaMod.Content.Projectiles
             {
                 return;
             }
+            Projectile.scale = 1f;
             Projectile.netUpdate = true;
             Player player = Main.player[Projectile.owner];
             if (!player.active || player.dead || player.noItems)

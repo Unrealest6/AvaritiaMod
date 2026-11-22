@@ -1,10 +1,26 @@
 namespace AvaritiaMod.Common.UI
 {
     /// <summary>
-    /// 工作台UI组件，继承<see cref="DragUIState{T}"/>拥有拖拽功能
+    /// 工作台UI组件。拖拽能力来自 <see cref="IDraggablePanel{T}"/>（组合 <see cref="DragPanelController{T}"/>），不再靠继承。
     /// </summary>
-    public abstract class CraftingTableUI : DragUIState<UIPanel>, ITileEntityUI<CraftingTableTileEntity>
+    public abstract class CraftingTableUI : UIState, IDraggablePanel<UIPanel>, ITileEntityUI<CraftingTableTileEntity>
     {
+        /// <summary>拖拽控制器（组合实现，见 <see cref="IDraggablePanel{T}"/>）。</summary>
+        public DragPanelController<UIPanel> DragPanel { get; }
+        /// <summary>供拖拽控制器访问框架成员（返回自身）。</summary>
+        public UIState State => this;
+        /// <summary>显示标记（实际存在 <see cref="DragPanel"/> 里）。</summary>
+        public bool Visible
+        {
+            get => DragPanel.Visible;
+            set => DragPanel.Visible = value;
+        }
+        /// <summary>可拖拽的根元素（实际存在 <see cref="DragPanel"/> 里）。</summary>
+        public UIPanel? Element
+        {
+            get => DragPanel.Element;
+            set => DragPanel.Element = value;
+        }
         /// <summary>
         /// 槽位尺寸常量
         /// </summary>
@@ -75,7 +91,7 @@ namespace AvaritiaMod.Common.UI
         /// <summary>
         /// 直接拖动标题栏即可移动面板（无需按住 Shift，也不会先按到物品槽上）。
         /// </summary>
-        protected override UIElement? DragHandle => Title;
+        public UIElement? DragHandle => Title;
         /// <summary>
         /// 滚动条视图最小值
         /// </summary>
@@ -95,6 +111,7 @@ namespace AvaritiaMod.Common.UI
         protected CraftingTableUI(CraftingTableTileEntity tileEntity)
         {
             TileEntity = tileEntity;
+            DragPanel = new DragPanelController<UIPanel>(this);
             Element = new UIPanel();
         }
         /// <summary>
@@ -108,12 +125,15 @@ namespace AvaritiaMod.Common.UI
                 ModContent.GetInstance<CraftingTableUISystem>().HideUI();
             }
             base.Update(gameTime);
+            //原 DragUIState.Update 的逻辑：拖拽 / 回弹 / 贴边
+            DragPanel.Update();
         }
         /// <summary>
         /// UI 激活时调用。从物块实体同步所有槽位物品，并恢复上次保存的面板位置。
         /// </summary>
         public override void OnActivate()
         {
+            DragPanel.OnActivate();
             if (Element is null)
             {
                 return;
@@ -136,6 +156,7 @@ namespace AvaritiaMod.Common.UI
         /// </summary>
         public override void OnDeactivate()
         {
+            DragPanel.OnDeactivate();
             //关闭前把槽位内容写回实体 / 服务端（实体里的旧数据会在下次打开时把物品“变回来”）
             AvaritiaItemSlot.SyncSlotsOfParent(this);
             if (Element is null)
